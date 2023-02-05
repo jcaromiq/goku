@@ -1,105 +1,136 @@
-use std::future::Future;
-use std::ops::Div;
-use std::time::Duration;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
-use reqwest::{Client, RequestBuilder};
+use reqwest::Client;
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::runtime;
 use tokio::runtime::Runtime;
-use tokio::sync::{mpsc, oneshot, Semaphore};
+use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
-use tokio::time::{Instant, sleep};
+use tokio::time::Instant;
 
+struct Settings {
+    clients: usize,
+    requests: usize,
+    keep_alive: Option<Duration>,
+}
+
+impl Settings {
+    pub fn requests_by_client(&self) -> usize {
+        self.requests / self.clients
+    }
+}
 
 fn main() {
+    let begin = Instant::now();
     // let threads = std::cmp::min(num_cpus::get(), config.concurrency as usize);
+
     let rt = runtime::Builder::new_multi_thread()
         .enable_all()
-        .worker_threads(10)
-        .build().unwrap();
-    let iterations = 400;
-    let clients = 400;
+        .worker_threads(11)
+        .build()
+        .unwrap();
+    let settings = Settings {
+        clients: 100,
+        requests: 200,
+        keep_alive: None,
+    };
+
     let mut tasks = FuturesUnordered::new();
     rt.block_on(async {
-        by_iteration(&rt, clients, iterations, &mut tasks).await;
-        let mut patata: Vec<Vec<R>> = vec![];
+        by_iteration(&rt, &settings, &mut tasks).await;
+        let mut results: Vec<Vec<R>> = vec![];
         while let Some(finished_task) = tasks.next().await {
             match finished_task {
                 Err(e) => { /* e is a JoinError - the task has panicked */ }
                 Ok(result) => {
-                    patata.push(result);
+                    results.push(result);
                 }
             }
         }
-        let patata = patata.into_iter().flatten().collect::<Vec<R>>();
-        let v: f64 = patata
-            .iter()
-            .map(|r| {
-                r.duration
-            }).sum();
-        println!("Total time: {} ms avg {} ", v, v / iterations as f64);
+        let results = results.into_iter().flatten().collect::<Vec<R>>();
+
+        println!(
+            "Total time: {}s for {} request with a average of {}ms ",
+            begin.elapsed().as_secs(),
+            results.iter().len(),
+            results.avg()
+        );
     });
 }
 
+pub trait Average {
+    fn avg(&self) -> u128;
+}
 
-async fn by_iteration(rt: &Runtime, num_clients: u64, iterations: u64, mut tasks: &mut FuturesUnordered<JoinHandle<Vec<R>>>) {
-    let mut clients = Vec::with_capacity(num_clients as usize);
-    for x in 0..num_clients {
-        let client = reqwest::Client::builder().tcp_keepalive(None).build().unwrap();
+impl Average for Vec<R> {
+    fn avg(&self) -> u128 {
+        let total: u128 = self.iter().map(|r| r.duration).sum();
+        let size: u128 = self.iter().len() as u128;
+        total / size
+    }
+}
+
+async fn by_iteration(
+    rt: &Runtime,
+    settings: &Settings,
+    tasks: &mut FuturesUnordered<JoinHandle<Vec<R>>>,
+) {
+    let mut clients = Vec::with_capacity(settings.clients);
+    for _ in 0..settings.clients {
+        let client = reqwest::Client::builder()
+            .tcp_keepalive(settings.keep_alive)
+            .build()
+            .unwrap();
         clients.push(client);
     }
+    let semaphore = Arc::new(Semaphore::new(1000));
     for (id, c) in clients.into_iter().enumerate() {
-        let task = rt.spawn({
-            exec_iterator(id, iterations / num_clients, c)
-        });
+        let task =
+            rt.spawn(exec_iterator(id, semaphore.clone(), settings.requests_by_client(), c));
 
         tasks.push(task);
     }
 }
 
-async fn exec_iterator(iteration: usize, num_requests: u64, client: Client) -> Vec<R> {
+async fn exec_iterator(
+    iteration: usize,
+    semaphore: Arc<Semaphore>,
+    num_requests: usize,
+    client: Client,
+) -> Vec<R> {
     let mut results = vec![];
+    let permit = semaphore.clone().acquire_owned().await.unwrap();
     for i in 0..num_requests {
-        let r = exec(iteration, i, &client).await;
+        let r = exec(iteration, i, &client, "http://localhost:3000/").await;
         results.push(r);
     }
     results
 }
 
-async fn exec(num_client: usize, execution: u64, client: &Client) -> R {
+async fn exec(num_client: usize, execution: usize, client: &Client, url: &str) -> R {
     let begin = Instant::now();
-    let response = client.get("http://localhost:3000/users").send().await;
-    let duration_ms = begin.elapsed().as_secs_f64() * 1000.0;
-    println!("Client {}, Execution {} Duration {}", num_client, execution, duration_ms);
+    let response = client.get(url).send().await;
+    let duration_ms = begin.elapsed().as_millis();
+    println!(
+        "[Client {}] Execution {} in Duration {} ms",
+        num_client, execution, duration_ms
+    );
     match response {
-        Ok(r) => {
-            R {
-                status: r.status().to_string(),
-                duration: duration_ms,
-            }
-        }
-        Err(e) => {
-            R {
-                status: "client error".to_string(),
-                duration: duration_ms,
-            }
-        }
+        Ok(r) => R {
+            status: r.status().to_string(),
+            duration: duration_ms,
+        },
+        Err(e) => R {
+            status: "client error".to_string(),
+            duration: duration_ms,
+        },
     }
 }
 
-async fn execute(iteration: usize, execution: i32, url: &str) -> (Option<String>, f64, ) {
-    println!("Iteration {}, Execution {}", iteration, execution);
-    let begin = Instant::now();
-    let response = reqwest::get(url).await;
-    let duration_ms = begin.elapsed().as_secs_f64() * 1000.0;
-    match response {
-        Ok(r) => { (Some(r.status().to_string()), duration_ms) }
-        Err(e) => { (None, duration_ms) }
-    }
-}
 
 #[derive(Debug)]
 struct R {
     status: String,
-    duration: f64,
+    duration: u128,
 }

@@ -209,6 +209,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "goku"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "num_cpus",
+ "rand",
+ "reqwest",
+ "tokio",
+]
+
+[[package]]
 name = "h2"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -392,17 +403,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "abb12e687cfb44aa40f41fc3978ef76448f9b6038cad6aef4259d3c095a2382e"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "machina"
-version = "0.1.0"
-dependencies = [
- "futures",
- "num_cpus",
- "rand",
- "reqwest",
- "tokio",
 ]
 
 [[package]]
