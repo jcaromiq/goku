@@ -1,7 +1,8 @@
 use futures::stream::FuturesUnordered;
-use futures::StreamExt;
 use reqwest::Client;
 use std::time::Duration;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
@@ -19,30 +20,27 @@ impl Settings {
 
 #[tokio::main]
 async fn main() {
-    let begin = Instant::now();
     let settings = Settings {
-        clients: 100,
-        requests: 200,
+        clients: 400,
+        requests: 1000000,
         keep_alive: None,
     };
 
-    let mut tasks = FuturesUnordered::new();
+    let (tx, mut rx) = mpsc::channel(settings.requests);
+    let begin = Instant::now();
 
-    by_iteration(&settings, &mut tasks).await;
-    let mut results: Vec<Vec<Result>> = vec![];
-    while let Some(finished_task) = tasks.next().await {
-        match finished_task {
-            Err(e) => { /* e is a JoinError - the task has panicked */ }
-            Ok(result) => {
-                results.push(result);
-            }
-        }
+    run(&settings, tx).await;
+
+    let mut results: Vec<Result> = vec![];
+
+    while let Some(value) = rx.recv().await {
+        results.push(value);
     }
-    let results = results.into_iter().flatten().collect::<Vec<Result>>();
+    let end = begin.elapsed().as_secs();
 
     println!(
         "Total time: {}s for {} request with a average of {}ms ",
-        begin.elapsed().as_secs(),
+        end,
         results.iter().len(),
         results.avg()
     );
@@ -60,7 +58,11 @@ impl Average for Vec<Result> {
     }
 }
 
-async fn by_iteration(settings: &Settings, tasks: &mut FuturesUnordered<JoinHandle<Vec<Result>>>) {
+async fn run(
+    settings: &Settings,
+    tx: Sender<Result>,
+) {
+    let mut tasks = FuturesUnordered::new();
     let mut clients = Vec::with_capacity(settings.clients);
     for _ in 0..settings.clients {
         let client = reqwest::Client::builder()
@@ -69,20 +71,22 @@ async fn by_iteration(settings: &Settings, tasks: &mut FuturesUnordered<JoinHand
             .unwrap();
         clients.push(client);
     }
-    for (id, c) in clients.into_iter().enumerate() {
-        let task = tokio::spawn(exec_iterator(id, settings.requests_by_client(), c));
-
+    for (id, client) in clients.into_iter().enumerate() {
+        let task = tokio::spawn(exec_iterator(
+            id,
+            settings.requests_by_client(),
+            client,
+            tx.clone(),
+        ));
         tasks.push(task);
     }
 }
 
-async fn exec_iterator(num_client: usize, num_requests: usize, client: Client) -> Vec<Result> {
-    let mut results = vec![];
+async fn exec_iterator(num_client: usize, num_requests: usize, client: Client, tx: Sender<Result>) {
     for i in 0..num_requests {
         let r = exec(num_client, i, &client, "http://localhost:3000/").await;
-        results.push(r);
+        tx.send(r).await.unwrap();
     }
-    results
 }
 
 async fn exec(num_client: usize, execution: usize, client: &Client, url: &str) -> Result {
@@ -98,7 +102,7 @@ async fn exec(num_client: usize, execution: usize, client: &Client, url: &str) -
             status: r.status().to_string(),
             duration: duration_ms,
         },
-        Err(e) => Result {
+        Err(_) => Result {
             status: "client error".to_string(),
             duration: duration_ms,
         },
