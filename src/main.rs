@@ -21,15 +21,9 @@ impl Settings {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let begin = Instant::now();
-    // let threads = std::cmp::min(num_cpus::get(), config.concurrency as usize);
-
-    let rt = runtime::Builder::new_multi_thread()
-        .enable_all()
-        .worker_threads(11)
-        .build()
-        .unwrap();
     let settings = Settings {
         clients: 100,
         requests: 200,
@@ -37,26 +31,25 @@ fn main() {
     };
 
     let mut tasks = FuturesUnordered::new();
-    rt.block_on(async {
-        by_iteration(&rt, &settings, &mut tasks).await;
-        let mut results: Vec<Vec<R>> = vec![];
-        while let Some(finished_task) = tasks.next().await {
-            match finished_task {
-                Err(e) => { /* e is a JoinError - the task has panicked */ }
-                Ok(result) => {
-                    results.push(result);
-                }
+
+    by_iteration(&settings, &mut tasks).await;
+    let mut results: Vec<Vec<R>> = vec![];
+    while let Some(finished_task) = tasks.next().await {
+        match finished_task {
+            Err(e) => { /* e is a JoinError - the task has panicked */ }
+            Ok(result) => {
+                results.push(result);
             }
         }
-        let results = results.into_iter().flatten().collect::<Vec<R>>();
+    }
+    let results = results.into_iter().flatten().collect::<Vec<R>>();
 
-        println!(
-            "Total time: {}s for {} request with a average of {}ms ",
-            begin.elapsed().as_secs(),
-            results.iter().len(),
-            results.avg()
-        );
-    });
+    println!(
+        "Total time: {}s for {} request with a average of {}ms ",
+        begin.elapsed().as_secs(),
+        results.iter().len(),
+        results.avg()
+    );
 }
 
 pub trait Average {
@@ -72,7 +65,6 @@ impl Average for Vec<R> {
 }
 
 async fn by_iteration(
-    rt: &Runtime,
     settings: &Settings,
     tasks: &mut FuturesUnordered<JoinHandle<Vec<R>>>,
 ) {
@@ -87,7 +79,7 @@ async fn by_iteration(
     let semaphore = Arc::new(Semaphore::new(1000));
     for (id, c) in clients.into_iter().enumerate() {
         let task =
-            rt.spawn(exec_iterator(id, semaphore.clone(), settings.requests_by_client(), c));
+            tokio::spawn(exec_iterator(id, semaphore.clone(), settings.requests_by_client(), c));
 
         tasks.push(task);
     }
