@@ -1,11 +1,7 @@
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use reqwest::Client;
-use std::sync::Arc;
 use std::time::Duration;
-use tokio::runtime;
-use tokio::runtime::Runtime;
-use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
@@ -64,10 +60,7 @@ impl Average for Vec<R> {
     }
 }
 
-async fn by_iteration(
-    settings: &Settings,
-    tasks: &mut FuturesUnordered<JoinHandle<Vec<R>>>,
-) {
+async fn by_iteration(settings: &Settings, tasks: &mut FuturesUnordered<JoinHandle<Vec<R>>>) {
     let mut clients = Vec::with_capacity(settings.clients);
     for _ in 0..settings.clients {
         let client = reqwest::Client::builder()
@@ -77,18 +70,13 @@ async fn by_iteration(
         clients.push(client);
     }
     for (id, c) in clients.into_iter().enumerate() {
-        let task =
-            tokio::spawn(exec_iterator(id,  settings.requests_by_client(), c));
+        let task = tokio::spawn(exec_iterator(id, settings.requests_by_client(), c));
 
         tasks.push(task);
     }
 }
 
-async fn exec_iterator(
-    num_client: usize,
-    num_requests: usize,
-    client: Client,
-) -> Vec<R> {
+async fn exec_iterator(num_client: usize, num_requests: usize, client: Client) -> Vec<R> {
     let mut results = vec![];
     for i in 0..num_requests {
         let r = exec(num_client, i, &client, "http://localhost:3000/").await;
@@ -116,7 +104,6 @@ async fn exec(num_client: usize, execution: usize, client: &Client, url: &str) -
         },
     }
 }
-
 
 #[derive(Debug)]
 struct R {
