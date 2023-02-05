@@ -76,25 +76,22 @@ async fn by_iteration(
             .unwrap();
         clients.push(client);
     }
-    let semaphore = Arc::new(Semaphore::new(1000));
     for (id, c) in clients.into_iter().enumerate() {
         let task =
-            tokio::spawn(exec_iterator(id, semaphore.clone(), settings.requests_by_client(), c));
+            tokio::spawn(exec_iterator(id,  settings.requests_by_client(), c));
 
         tasks.push(task);
     }
 }
 
 async fn exec_iterator(
-    iteration: usize,
-    semaphore: Arc<Semaphore>,
+    num_client: usize,
     num_requests: usize,
     client: Client,
 ) -> Vec<R> {
     let mut results = vec![];
-    let permit = semaphore.clone().acquire_owned().await.unwrap();
     for i in 0..num_requests {
-        let r = exec(iteration, i, &client, "http://localhost:3000/").await;
+        let r = exec(num_client, i, &client, "http://localhost:3000/").await;
         results.push(r);
     }
     results
