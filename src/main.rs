@@ -29,7 +29,7 @@ async fn main() {
     let mut tasks = FuturesUnordered::new();
 
     by_iteration(&settings, &mut tasks).await;
-    let mut results: Vec<Vec<R>> = vec![];
+    let mut results: Vec<Vec<Result>> = vec![];
     while let Some(finished_task) = tasks.next().await {
         match finished_task {
             Err(e) => { /* e is a JoinError - the task has panicked */ }
@@ -38,7 +38,7 @@ async fn main() {
             }
         }
     }
-    let results = results.into_iter().flatten().collect::<Vec<R>>();
+    let results = results.into_iter().flatten().collect::<Vec<Result>>();
 
     println!(
         "Total time: {}s for {} request with a average of {}ms ",
@@ -52,7 +52,7 @@ pub trait Average {
     fn avg(&self) -> u128;
 }
 
-impl Average for Vec<R> {
+impl Average for Vec<Result> {
     fn avg(&self) -> u128 {
         let total: u128 = self.iter().map(|r| r.duration).sum();
         let size: u128 = self.iter().len() as u128;
@@ -60,7 +60,7 @@ impl Average for Vec<R> {
     }
 }
 
-async fn by_iteration(settings: &Settings, tasks: &mut FuturesUnordered<JoinHandle<Vec<R>>>) {
+async fn by_iteration(settings: &Settings, tasks: &mut FuturesUnordered<JoinHandle<Vec<Result>>>) {
     let mut clients = Vec::with_capacity(settings.clients);
     for _ in 0..settings.clients {
         let client = reqwest::Client::builder()
@@ -76,7 +76,7 @@ async fn by_iteration(settings: &Settings, tasks: &mut FuturesUnordered<JoinHand
     }
 }
 
-async fn exec_iterator(num_client: usize, num_requests: usize, client: Client) -> Vec<R> {
+async fn exec_iterator(num_client: usize, num_requests: usize, client: Client) -> Vec<Result> {
     let mut results = vec![];
     for i in 0..num_requests {
         let r = exec(num_client, i, &client, "http://localhost:3000/").await;
@@ -85,7 +85,7 @@ async fn exec_iterator(num_client: usize, num_requests: usize, client: Client) -
     results
 }
 
-async fn exec(num_client: usize, execution: usize, client: &Client, url: &str) -> R {
+async fn exec(num_client: usize, execution: usize, client: &Client, url: &str) -> Result {
     let begin = Instant::now();
     let response = client.get(url).send().await;
     let duration_ms = begin.elapsed().as_millis();
@@ -94,11 +94,11 @@ async fn exec(num_client: usize, execution: usize, client: &Client, url: &str) -
         num_client, execution, duration_ms
     );
     match response {
-        Ok(r) => R {
+        Ok(r) => Result {
             status: r.status().to_string(),
             duration: duration_ms,
         },
-        Err(e) => R {
+        Err(e) => Result {
             status: "client error".to_string(),
             duration: duration_ms,
         },
@@ -106,7 +106,7 @@ async fn exec(num_client: usize, execution: usize, client: &Client, url: &str) -
 }
 
 #[derive(Debug)]
-struct R {
+struct Result {
     status: String,
     duration: u128,
 }
