@@ -1,7 +1,8 @@
 use crate::benchmark::Result;
 use crate::settings::Settings;
+use colored::Colorize;
 use futures::stream::FuturesUnordered;
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
@@ -33,19 +34,44 @@ async fn exec_iterator(num_client: usize, settings: Settings, client: Client, tx
 async fn exec(num_client: usize, execution: usize, client: &Client, url: &str) -> Result {
     let begin = Instant::now();
     let response = client.get(url).send().await;
-    let duration_ms = begin.elapsed().as_millis();
-    println!(
-        "[Client {}] Execution {} in Duration {} ms",
-        num_client, execution, duration_ms
-    );
+    let duration_ms = begin.elapsed().as_millis() as u64;
     match response {
-        Ok(r) => Result {
-            status: r.status().as_u16(),
-            duration: duration_ms,
-        },
-        Err(_) => Result {
-            status: 0,
-            duration: duration_ms,
-        },
+        Ok(r) => {
+            let status = r.status().as_u16();
+            println!(
+                "[{} {} {} {}] {} {}{}",
+                "Client".bold().green(),
+                num_client.to_string().bold().green(),
+                "Iteration".bold().green(),
+                execution.to_string().bold().green(),
+                status.to_string().bold().yellow(),
+                duration_ms.to_string().cyan(),
+                "ms".cyan()
+            );
+            Result {
+                status: r.status().as_u16(),
+                duration: duration_ms,
+            }
+        }
+        Err(e) => {
+            let status = match e.status() {
+                None => "client error".to_string(),
+                Some(s) => s.as_u16().to_string(),
+            };
+            println!(
+                "[{} {} {} {}] {} {}{}",
+                "Client".bold().green(),
+                num_client.to_string().bold().green(),
+                "Iteration".bold().green(),
+                execution.to_string().bold().green(),
+                status.bold().yellow(),
+                duration_ms.to_string().cyan(),
+                "ms".cyan()
+            );
+            Result {
+                status: 0,
+                duration: duration_ms,
+            }
+        }
     }
 }
