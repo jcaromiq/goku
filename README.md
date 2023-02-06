@@ -29,11 +29,13 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 Usage: goku [OPTIONS] --target <TARGET>
 
 Options:
-  -t, --target <TARGET>          Url to be request with operation Ej, GET http://localhost:3000/ if operation is empty, will be GET by default
-  -c, --clients <CLIENTS>        Number of concurrent clients [default: 1]
-  -i, --iterations <ITERATIONS>  Total number of iterations [default: 1]
-  -h, --help                     Print help
-  -V, --version                  Print version
+  -t, --target <TARGET>              Url to be request with operation Ej, GET http://localhost:3000/ if operation is empty, will be GET by default
+  -r, --request-body <REQUEST_BODY>  path of file for the request body
+  -c, --clients <CLIENTS>            Number of concurrent clients [default: 1]
+  -i, --iterations <ITERATIONS>      Total number of iterations [default: 1]
+  -h, --help                         Print help
+  -V, --version                      Print version
+
 
 ```
 
@@ -74,7 +76,8 @@ WIP
 ###### Targets with custom bodies
 
 ```
-WIP
+goku --target "POST http://localhost:3000" -c 50 -i 1000 -r body.json
+
 ```
 
 ###### Targets with custom bodies and headers

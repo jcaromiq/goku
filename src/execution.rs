@@ -36,6 +36,12 @@ async fn exec(num_client: usize, execution: usize, client: &Client, settings: &S
         Operation::Put => client.put(settings.target()),
         Operation::Delete => client.delete(settings.target()),
     };
+    let request_builder = match &settings.body {
+        None => request_builder,
+        Some(b) => request_builder
+            .header("content-type", "application/json")
+            .body(b.to_string()),
+    };
     let response = request_builder.send().await;
     let duration_ms = begin.elapsed().as_millis() as u64;
     match response {

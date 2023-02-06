@@ -1,5 +1,6 @@
 use crate::settings::Operation::Get;
 use clap::Parser;
+use std::fs;
 use std::str::FromStr;
 use std::time::Duration;
 use strum::EnumString;
@@ -11,6 +12,10 @@ pub struct Args {
     /// Url to be request with operation Ej, GET http://localhost:3000/ if operation is empty, will be GET by default
     #[arg(short, long)]
     target: String,
+
+    /// path of file for the request body
+    #[arg(short, long)]
+    request_body: Option<String>,
 
     /// Number of concurrent clients
     #[arg(short, long, default_value_t = 1)]
@@ -39,6 +44,7 @@ pub struct Settings {
     pub requests: usize,
     pub target: String,
     pub keep_alive: Option<Duration>,
+    pub body: Option<String>,
 }
 
 impl Settings {
@@ -46,11 +52,16 @@ impl Settings {
         self.requests / self.clients
     }
     pub fn from_args(args: Args) -> Self {
+        let body = args
+            .request_body
+            .map(|f| fs::read_to_string(f).expect("Should have been able to read the file"));
+
         Settings {
             clients: args.clients,
             requests: args.iterations,
             target: args.target,
             keep_alive: None,
+            body,
         }
     }
     pub fn operation(&self) -> Operation {
@@ -81,6 +92,7 @@ mod tests {
     fn should_set_get_as_default_operation() {
         let args = Args {
             target: "https://localhost:3000".to_string(),
+            request_body: None,
             clients: 0,
             iterations: 0,
         };
@@ -93,6 +105,7 @@ mod tests {
     fn should_get_operation_from_target() {
         let args = Args {
             target: "POST https://localhost:3000".to_string(),
+            request_body: None,
             clients: 0,
             iterations: 0,
         };
@@ -105,6 +118,7 @@ mod tests {
     fn should_get_target_from_target_without_operation() {
         let args = Args {
             target: "https://localhost:3000".to_string(),
+            request_body: None,
             clients: 0,
             iterations: 0,
         };
@@ -117,6 +131,7 @@ mod tests {
     fn should_get_target_from_target_with_operation() {
         let args = Args {
             target: "POST https://localhost:3000".to_string(),
+            request_body: None,
             clients: 0,
             iterations: 0,
         };
@@ -129,6 +144,7 @@ mod tests {
     fn should_set_get_operation_if_operation_is_not_allowed() {
         let args = Args {
             target: "FOO https://localhost:3000".to_string(),
+            request_body: None,
             clients: 0,
             iterations: 0,
         };
