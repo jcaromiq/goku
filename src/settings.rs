@@ -1,8 +1,8 @@
+use crate::settings::Operation::Get;
 use clap::Parser;
+use std::str::FromStr;
 use std::time::Duration;
 use strum::EnumString;
-use std::str::FromStr;
-use crate::settings::OPERATION::GET;
 
 /// a HTTP benchmarking tool
 #[derive(Parser, Debug)]
@@ -22,7 +22,16 @@ pub struct Args {
 }
 
 #[derive(Eq, PartialEq, Debug, EnumString)]
-pub enum OPERATION { GET, POST }
+pub enum Operation {
+    #[strum(serialize = "GET")]
+    Get,
+    #[strum(serialize = "POST")]
+    Post,
+    Head,
+    Patch,
+    Put,
+    Delete,
+}
 
 #[derive(Clone)]
 pub struct Settings {
@@ -44,27 +53,26 @@ impl Settings {
             keep_alive: None,
         }
     }
-    pub fn operation(&self) -> OPERATION {
+    pub fn operation(&self) -> Operation {
         let slices: Vec<&str> = self.target.split_whitespace().collect();
         if slices.len() == 1 {
-            return GET;
+            return Get;
         }
-        return OPERATION::from_str(&slices.first().unwrap().to_uppercase()).unwrap();
+        return Operation::from_str(&slices.first().unwrap().to_uppercase()).unwrap();
     }
     pub fn target(&self) -> String {
         let slices: Vec<&str> = self.target.split_whitespace().collect();
         if slices.len() == 1 {
-            return slices.first().unwrap().to_string()
+            return slices.first().unwrap().to_string();
         }
         slices.get(1).unwrap().to_string()
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::settings::OPERATION::{GET, POST};
     use super::*;
+    use crate::settings::Operation::{Delete, Get, Head, Patch, Post, Put};
 
     #[test]
     fn should_set_get_as_default_operation() {
@@ -75,7 +83,7 @@ mod tests {
         };
 
         let settings = Settings::from_args(args);
-        assert_eq!(GET, settings.operation());
+        assert_eq!(Get, settings.operation());
     }
 
     #[test]
@@ -87,7 +95,7 @@ mod tests {
         };
 
         let settings = Settings::from_args(args);
-        assert_eq!(POST, settings.operation());
+        assert_eq!(Post, settings.operation());
     }
 
     #[test]

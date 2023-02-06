@@ -1,5 +1,5 @@
 use crate::benchmark::Result;
-use crate::settings::{OPERATION, Settings};
+use crate::settings::{Operation, Settings};
 use colored::Colorize;
 use reqwest::Client;
 use tokio::sync::mpsc::Sender;
@@ -28,10 +28,15 @@ async fn exec_iterator(num_client: usize, settings: Settings, client: Client, tx
 
 async fn exec(num_client: usize, execution: usize, client: &Client, settings: &Settings) -> Result {
     let begin = Instant::now();
-    let response = match settings.operation() {
-        OPERATION::GET => client.get(settings.target()).send().await,
-        OPERATION::POST => client.post(settings.target()).send().await
+    let request_builder = match settings.operation() {
+        Operation::Get => client.get(settings.target()),
+        Operation::Post => client.post(settings.target()),
+        Operation::Head => client.head(settings.target()),
+        Operation::Patch => client.patch(settings.target()),
+        Operation::Put => client.put(settings.target()),
+        Operation::Delete => client.delete(settings.target()),
     };
+    let response = request_builder.send().await;
     let duration_ms = begin.elapsed().as_millis() as u64;
     match response {
         Ok(r) => {

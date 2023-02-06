@@ -8,8 +8,8 @@ mod benchmark;
 mod execution;
 mod settings;
 
-use hdrhistogram::Histogram;
 use clap::Parser;
+use hdrhistogram::Histogram;
 
 use colored::Colorize;
 
