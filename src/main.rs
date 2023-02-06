@@ -49,7 +49,6 @@ async fn main() {
     let begin = Instant::now();
     run(settings.clone(), tx).await;
 
-
     while let Some(value) = rx.recv().await {
         hist.record(value.duration).expect("");
         report.add_result(value);

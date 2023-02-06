@@ -1,6 +1,6 @@
 # Goku 
 
-Goku is a HTTP load testing tool built out of a need to drill HTTP services
+Goku is a HTTP load testing tool built out of a need to drill HTTP services inspired by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/tsenart/vegeta)  
 
 ![Goku](https://static1.cbrimages.com/wordpress/wp-content/uploads/2020/01/Goku-Kamehameha-2-1-Cropped-1.jpg?q=50&fit=contain&w=1140&h=&dpr=1.5)
 
@@ -29,7 +29,7 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 Usage: goku [OPTIONS] --target <TARGET>
 
 Options:
-  -t, --target <TARGET>          Url to be request
+  -t, --target <TARGET>          Url to be requested
   -c, --clients <CLIENTS>        Number of concurrent clients [default: 1]
   -i, --iterations <ITERATIONS>  Total number of iterations [default: 1]
   -h, --help                     Print help

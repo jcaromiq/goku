@@ -5,7 +5,7 @@ use reqwest::Client;
 use tokio::sync::mpsc::Sender;
 use tokio::time::Instant;
 
-pub async fn run(settings: Settings, tx: Sender<Result>)  {
+pub async fn run(settings: Settings, tx: Sender<Result>) {
     let mut clients = Vec::with_capacity(settings.clients);
     for _ in 0..settings.clients {
         let client = Client::builder()
@@ -17,7 +17,6 @@ pub async fn run(settings: Settings, tx: Sender<Result>)  {
     for (id, client) in clients.into_iter().enumerate() {
         tokio::spawn(exec_iterator(id, settings.clone(), client, tx.clone()));
     }
-
 }
 
 async fn exec_iterator(num_client: usize, settings: Settings, client: Client, tx: Sender<Result>) {

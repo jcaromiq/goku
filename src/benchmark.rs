@@ -12,8 +12,8 @@ impl Average for Vec<Result> {
 
 #[derive(Debug)]
 pub struct Result {
-    pub(crate) status: u16,
-    pub(crate) duration: u64,
+    pub status: u16,
+    pub duration: u64,
 }
 
 #[derive(Debug)]
