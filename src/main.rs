@@ -8,39 +8,14 @@ mod benchmark;
 mod execution;
 mod settings;
 
-use clap::Parser;
 use hdrhistogram::Histogram;
 
 use colored::Colorize;
 
-/// a HTTP benchmarking tool
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    /// Url to be request
-    #[arg(short, long)]
-    target: String,
-
-    /// Number of concurrent clients
-    #[arg(short, long, default_value_t = 1)]
-    clients: usize,
-
-    /// Total number of iterations
-    #[arg(short, long, default_value_t = 1)]
-    iterations: usize,
-}
-
 #[tokio::main]
 async fn main() {
     let mut hist = Histogram::<u64>::new(1).unwrap();
-    let args = Args::parse();
-
-    let settings = Settings {
-        clients: args.clients,
-        requests: args.iterations,
-        target: args.target,
-        keep_alive: None,
-    };
+    let settings = Settings::from_args();
 
     let mut report = Report::new();
 
