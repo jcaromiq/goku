@@ -1,6 +1,7 @@
-# Goku 
+# Goku
 
-Goku is a HTTP load testing tool built out of a need to drill HTTP services inspired by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/tsenart/vegeta)  
+Goku is a HTTP load testing tool built out of a need to drill HTTP services inspired
+by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/tsenart/vegeta)
 
 ![Goku](https://static1.cbrimages.com/wordpress/wp-content/uploads/2020/01/Goku-Kamehameha-2-1-Cropped-1.jpg?q=50&fit=contain&w=1140&h=&dpr=1.5)
 
@@ -8,7 +9,7 @@ Goku is a HTTP load testing tool built out of a need to drill HTTP services insp
 
 ### Source
 
-You need `rust` installed 
+You need `rust` installed
 command:
 
 ```shell
@@ -40,23 +41,30 @@ Options:
 ```
 
 #### `--target` `-t`
+
 Specifies the operation and url to make the request<br>
 Format: GET https://localhost:3000<br>
 if operation is empty, GET will be the default value
 
+#### `--request-body` `-r` Optional
+
+Specifies the path of file with the body to send<br>
+At the moment only json body is allowed
 
 #### `--clients` `-c`
+
 Specifies the number of concurrent calls to be used, defaults to 1.
 
-
 #### `--iterations` `-i`
+
 Specifies the total number of calls to be performed, default to 1.
 
-
 #### `--help`
+
 Prints the help and exits.
 
 #### `--version`
+
 Prints the version and exits.
 
 ###### Simple targets
@@ -85,7 +93,9 @@ goku --target "POST http://localhost:3000" -c 50 -i 1000 -r body.json
 ```
 WIP
 ```
+
 ###### Output
+
 ```
 Concurrency level 50
 Time taken 4 seconds
