@@ -17,7 +17,7 @@ $ cargo build --release
 
 ## Versioning
 
-Both the library and the CLI are versioned with [SemVer v2.0.0](https://semver.org/spec/v2.0.0.html).
+CLI is versioned with [SemVer v2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## Contributing
 
