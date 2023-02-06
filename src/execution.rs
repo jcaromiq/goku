@@ -1,27 +1,23 @@
 use crate::benchmark::Result;
 use crate::settings::Settings;
 use colored::Colorize;
-use futures::stream::FuturesUnordered;
-use reqwest::{Client, StatusCode};
+use reqwest::Client;
 use tokio::sync::mpsc::Sender;
-use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
-pub async fn run(settings: Settings, tx: Sender<Result>) -> FuturesUnordered<JoinHandle<()>> {
-    let tasks = FuturesUnordered::new();
+pub async fn run(settings: Settings, tx: Sender<Result>)  {
     let mut clients = Vec::with_capacity(settings.clients);
     for _ in 0..settings.clients {
-        let client = reqwest::Client::builder()
+        let client = Client::builder()
             .tcp_keepalive(settings.keep_alive)
             .build()
             .unwrap();
         clients.push(client);
     }
     for (id, client) in clients.into_iter().enumerate() {
-        let task = tokio::spawn(exec_iterator(id, settings.clone(), client, tx.clone()));
-        tasks.push(task);
+        tokio::spawn(exec_iterator(id, settings.clone(), client, tx.clone()));
     }
-    return tasks;
+
 }
 
 async fn exec_iterator(num_client: usize, settings: Settings, client: Client, tx: Sender<Result>) {
