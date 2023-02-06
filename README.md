@@ -29,7 +29,7 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 Usage: goku [OPTIONS] --target <TARGET>
 
 Options:
-  -t, --target <TARGET>          Url to be requested
+  -t, --target <TARGET>          Url to be request with operation Ej, GET http://localhost:3000/ if operation is empty, will be GET by default
   -c, --clients <CLIENTS>        Number of concurrent clients [default: 1]
   -i, --iterations <ITERATIONS>  Total number of iterations [default: 1]
   -h, --help                     Print help
@@ -38,7 +38,10 @@ Options:
 ```
 
 #### `--target` `-t`
-Specifies the url to make the request
+Specifies the operation and url to make the request<br>
+Format: GET https://localhost:3000<br>
+if operation is empty, GET will be the default value
+
 
 #### `--clients` `-c`
 Specifies the number of concurrent calls to be used, defaults to 1.
@@ -57,7 +60,7 @@ Prints the version and exits.
 ###### Simple targets
 
 ```
-goku --target http://localhost:3000
+goku --target "GET http://localhost:3000"
 goku --target http://localhost:3000?foo=bar
 goku --target http://localhost:3000 -c 50 -i 1000
 ```

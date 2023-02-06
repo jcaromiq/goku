@@ -1,6 +1,6 @@
 use crate::benchmark::Report;
 use crate::execution::run;
-use crate::settings::Settings;
+use crate::settings::{Args, Settings};
 use tokio::sync::mpsc;
 use tokio::time::Instant;
 
@@ -9,13 +9,14 @@ mod execution;
 mod settings;
 
 use hdrhistogram::Histogram;
+use clap::Parser;
 
 use colored::Colorize;
 
 #[tokio::main]
 async fn main() {
     let mut hist = Histogram::<u64>::new(1).unwrap();
-    let settings = Settings::from_args();
+    let settings = Settings::from_args(Args::parse());
 
     let mut report = Report::new();
 
