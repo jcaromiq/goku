@@ -1,7 +1,6 @@
 # Goku 
 
-Goku is a HTTP load testing tool built out of a need to drill HTTP services with a constant request rate.
-It can be used both as a command line utility and a library.
+Goku is a HTTP load testing tool built out of a need to drill HTTP services
 
 ![Goku](https://static1.cbrimages.com/wordpress/wp-content/uploads/2020/01/Goku-Kamehameha-2-1-Cropped-1.jpg?q=50&fit=contain&w=1140&h=&dpr=1.5)
 
@@ -60,7 +59,7 @@ Prints the version and exits.
 ```
 goku --target http://localhost:3000
 goku --target http://localhost:3000?foo=bar
-goku --target http://localhost:3000 -c 100 -i 200
+goku --target http://localhost:3000 -c 50 -i 1000
 ```
 
 ###### Targets with custom headers
@@ -79,6 +78,19 @@ WIP
 
 ```
 WIP
+```
+###### Output
+```
+Concurrency level 50
+Time taken 4 seconds
+Total requests 1000
+Mean request time 169.90099999999998 ms
+Max request time 415 ms
+Min request time 5 ms
+50'th percentile: 167 ms
+90'th percentile: 287 ms
+95'th percentile: 319 ms
+99.9'th percentile: 367 ms
 ```
 
 ## License
