@@ -1,4 +1,3 @@
-
 pub trait Average {
     fn avg(&self) -> u128;
 }

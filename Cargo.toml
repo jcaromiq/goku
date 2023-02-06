@@ -9,5 +9,4 @@ edition = "2021"
 reqwest = "0.11.14"
 tokio = {version="1.25.0", features = ["full"] }
 futures = "0.3.26"
-rand = "0.8.5"
-num_cpus = "1.15.0"
+clap = { version="4.1.4", features=["derive"] }

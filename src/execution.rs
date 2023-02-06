@@ -6,7 +6,7 @@ use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
-pub async fn run(settings: &Settings, tx: Sender<Result>) -> FuturesUnordered<JoinHandle<()>> {
+pub async fn run(settings: Settings, tx: Sender<Result>) -> FuturesUnordered<JoinHandle<()>> {
     let tasks = FuturesUnordered::new();
     let mut clients = Vec::with_capacity(settings.clients);
     for _ in 0..settings.clients {
@@ -17,20 +17,15 @@ pub async fn run(settings: &Settings, tx: Sender<Result>) -> FuturesUnordered<Jo
         clients.push(client);
     }
     for (id, client) in clients.into_iter().enumerate() {
-        let task = tokio::spawn(exec_iterator(
-            id,
-            settings.requests_by_client(),
-            client,
-            tx.clone(),
-        ));
+        let task = tokio::spawn(exec_iterator(id, settings.clone(), client, tx.clone()));
         tasks.push(task);
     }
     return tasks;
 }
 
-async fn exec_iterator(num_client: usize, num_requests: usize, client: Client, tx: Sender<Result>) {
-    for i in 0..num_requests {
-        let r = exec(num_client, i, &client, "http://localhost:3000/").await;
+async fn exec_iterator(num_client: usize, settings: Settings, client: Client, tx: Sender<Result>) {
+    for i in 0..settings.requests_by_client() {
+        let r = exec(num_client, i, &client, &settings.target).await;
         tx.send(r).await.unwrap();
     }
 }
