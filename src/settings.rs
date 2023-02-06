@@ -58,7 +58,10 @@ impl Settings {
         if slices.len() == 1 {
             return Get;
         }
-        return Operation::from_str(&slices.first().unwrap().to_uppercase()).unwrap();
+        match Operation::from_str(&slices.first().unwrap().to_uppercase()) {
+            Ok(op) => op,
+            Err(_) => Get,
+        }
     }
     pub fn target(&self) -> String {
         let slices: Vec<&str> = self.target.split_whitespace().collect();
@@ -120,5 +123,17 @@ mod tests {
 
         let settings = Settings::from_args(args);
         assert_eq!("https://localhost:3000", settings.target());
+    }
+
+    #[test]
+    fn should_set_get_operation_if_operation_is_not_allowed() {
+        let args = Args {
+            target: "FOO https://localhost:3000".to_string(),
+            clients: 0,
+            iterations: 0,
+        };
+
+        let settings = Settings::from_args(args);
+        assert_eq!(Get, settings.operation());
     }
 }
