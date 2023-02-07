@@ -9,8 +9,7 @@ by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/t
 
 ### Source
 
-You need `rust` installed
-command:
+As a requirement, you need `rust` installed:
 
 ```shell
 $ cargo build --release
@@ -30,25 +29,22 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 Usage: goku [OPTIONS] --target <TARGET>
 
 Options:
-  -t, --target <TARGET>              Url to be request with operation Ej, GET http://localhost:3000/ if operation is empty, will be GET by default
-  -r, --request-body <REQUEST_BODY>  path of file for the request body
+  -t, --target <TARGET>              URL to be requested using an operation [default: GET] Ex. GET http://localhost:3000/
+  -r, --request-body <REQUEST_BODY>  File path for the request body
   -c, --clients <CLIENTS>            Number of concurrent clients [default: 1]
   -i, --iterations <ITERATIONS>      Total number of iterations [default: 1]
-  -h, --help                         Print help
-  -V, --version                      Print version
-
-
+  -h, --help                         Prints help
+  -V, --version                      Prints version information
 ```
 
 #### `--target` `-t`
 
-Specifies the operation and url to make the request<br>
+Specifies the operation and url to make the request, default to GET.<br>
 Format: GET https://localhost:3000<br>
-if operation is empty, GET will be the default value
 
 #### `--request-body` `-r` Optional
 
-Specifies the path of file with the body to send<br>
+Specifies the path of file with the body to send.<br>
 At the moment only json body is allowed
 
 #### `--clients` `-c`
@@ -61,18 +57,18 @@ Specifies the total number of calls to be performed, default to 1.
 
 #### `--help`
 
-Prints the help and exits.
+Prints help.
 
 #### `--version`
 
-Prints the version and exits.
+Prints version information.
 
 ###### Simple targets
 
 ```
 goku --target "GET http://localhost:3000"
 goku --target http://localhost:3000?foo=bar
-goku --target http://localhost:3000 -c 50 -i 1000
+goku -c 50 -i 1000 --target http://localhost:3000
 ```
 
 ###### Targets with custom headers
@@ -84,7 +80,7 @@ WIP
 ###### Targets with custom bodies
 
 ```
-goku --target "POST http://localhost:3000" -c 50 -i 1000 -r body.json
+goku -c 50 -i 1000 -r body.json --target "POST http://localhost:3000"
 
 ```
 
