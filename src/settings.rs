@@ -9,11 +9,11 @@ use strum::EnumString;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Args {
-    /// Url to be request with operation Ej, GET http://localhost:3000/ if operation is empty, will be GET by default
+    /// URL to be requested using an operation [default: GET] Ex. GET http://localhost:3000/
     #[arg(short, long)]
     target: String,
 
-    /// path of file for the request body
+    /// File path for the request body
     #[arg(short, long)]
     request_body: Option<String>,
 
