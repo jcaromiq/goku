@@ -79,17 +79,26 @@ impl Settings {
         if slices.len() == 1 {
             return Get;
         }
-        match Operation::from_str(&slices.first().unwrap().to_uppercase()) {
-            Ok(op) => op,
-            Err(_) => Get,
+        match slices.first() {
+            None => Get,
+            Some(op) => match Operation::from_str(&op.to_uppercase()) {
+                Ok(op) => op,
+                Err(_) => Get,
+            },
         }
     }
     pub fn target(&self) -> String {
         let slices: Vec<&str> = self.target.split_whitespace().collect();
         if slices.len() == 1 {
-            return slices.first().unwrap().to_string();
+            return slices
+                .first()
+                .expect("target is not well formatted")
+                .to_string();
         }
-        slices.get(1).unwrap().to_string()
+        slices
+            .get(1)
+            .expect("target is not well formatted")
+            .to_string()
     }
 }
 

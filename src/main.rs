@@ -8,7 +8,7 @@ mod benchmark;
 mod execution;
 mod settings;
 
-use anyhow::{Context, Result};
+use anyhow::{Result};
 use clap::Parser;
 use hdrhistogram::Histogram;
 
@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
     let (tx, mut rx) = mpsc::channel(settings.requests);
 
     let begin = Instant::now();
-    run(settings.clone(), tx).await;
+    run(settings.clone(), tx).await?;
 
     while let Some(value) = rx.recv().await {
         hist.record(value.duration).expect("");
