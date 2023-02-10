@@ -8,15 +8,16 @@ mod benchmark;
 mod execution;
 mod settings;
 
+use anyhow::{Context, Result};
 use clap::Parser;
 use hdrhistogram::Histogram;
 
 use colored::Colorize;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let mut hist = Histogram::<u64>::new(1).unwrap();
-    let settings = Settings::from_args(Args::parse());
+    let settings = Settings::from_args(Args::parse())?;
 
     let mut report = Report::new();
 
@@ -90,4 +91,5 @@ async fn main() {
         hist.value_at_quantile(0.999).to_string().purple(),
         "ms".purple()
     );
+    Ok(())
 }
