@@ -11,7 +11,7 @@ by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/t
 You can download the latest version of Goku directly to your current directory with the following command:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/0.1.0/scripts/install.sh | sh
+curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/0.1.1/scripts/install.sh | sh
 ```
 
 ### Manual download
