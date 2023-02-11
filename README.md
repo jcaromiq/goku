@@ -6,6 +6,21 @@ by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/t
 ![Goku](https://static1.cbrimages.com/wordpress/wp-content/uploads/2020/01/Goku-Kamehameha-2-1-Cropped-1.jpg?q=50&fit=contain&w=1140&h=&dpr=1.5)
 
 ## Install
+### Automatic download (Linux, OSX, WSL)
+
+You can download the latest version of Goku directly to your current directory with the following command:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/0.1.0/scripts/install.sh | sh
+```
+
+### Manual download
+
+Go to the Goku's [GitHub Releases page](https://github.com/jcaromiq/goku/releases) and download the latest `.tar.gz` file that matches your system. Currently, tarballs are available for the following:
+
+* Linux (x86_64)
+* macOS (x86_64)
+* Windows (x86_64)
 
 ### Source
 
