@@ -69,18 +69,6 @@ async fn main() -> Result<()> {
     );
     println!(
         "{} {} {}",
-        "50'th percentile:".yellow().bold(),
-        hist.value_at_quantile(0.50).to_string().purple(),
-        "ms".purple()
-    );
-    println!(
-        "{} {} {}",
-        "90'th percentile:".yellow().bold(),
-        hist.value_at_quantile(0.90).to_string().purple(),
-        "ms".purple()
-    );
-    println!(
-        "{} {} {}",
         "95'th percentile:".yellow().bold(),
         hist.value_at_quantile(0.95).to_string().purple(),
         "ms".purple()

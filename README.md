@@ -114,8 +114,6 @@ Total requests 1000
 Mean request time 169.90099999999998 ms
 Max request time 415 ms
 Min request time 5 ms
-50'th percentile: 167 ms
-90'th percentile: 287 ms
 95'th percentile: 319 ms
 99.9'th percentile: 367 ms
 ```
