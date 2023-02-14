@@ -2,6 +2,11 @@
 name = "goku"
 version = "0.1.1"
 edition = "2021"
+authors = ["Joaquin Caro <me@joaquin-caro.es>"]
+description = "Goku is an HTTP load testing application written in Rust "
+repository = "https://github.com/jcaromiq/goku"
+keywords = ["performance", "http", "benchmark", "load-testing", "performance-testing"]
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
