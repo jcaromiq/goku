@@ -74,7 +74,6 @@ async fn exec(
     let request_builder = match &settings.body {
         None => request_builder,
         Some(b) => request_builder
-            .header("content-type", "application/json")
             .body(b.to_string()),
     };
     let response = request_builder
