@@ -25,14 +25,6 @@ impl Report {
     pub fn new() -> Self {
         Report { results: vec![] }
     }
-    pub fn total(&self) -> usize {
-        self.results.len()
-    }
-
-    pub fn avg(&self) -> u64 {
-        self.results.avg()
-    }
-
     pub fn add_result(&mut self, result: BenchmarkResult) {
         self.results.push(result);
     }
