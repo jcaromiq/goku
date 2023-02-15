@@ -25,6 +25,10 @@ pub struct Args {
     /// Total number of iterations
     #[arg(short, long, default_value_t = 1)]
     iterations: usize,
+
+    /// Headers, multi value in format headerName:HeaderValue
+    #[arg(long)]
+    headers: Option<Vec<String>>,
 }
 
 #[derive(Eq, PartialEq, Debug, EnumString)]
@@ -46,6 +50,13 @@ pub struct Settings {
     pub target: String,
     pub keep_alive: Option<Duration>,
     pub body: Option<String>,
+    pub headers: Option<Vec<Header>>,
+}
+
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub struct Header {
+    pub key: String,
+    pub value: String,
 }
 
 impl Settings {
@@ -53,6 +64,22 @@ impl Settings {
         self.requests / self.clients
     }
     pub fn from_args(args: Args) -> Result<Self> {
+        let headers = match args.headers {
+            None => None,
+            Some(headers_string) => {
+                let headers: Vec<Header> = headers_string
+                    .iter()
+                    .map(|v| {
+                        let split: Vec<&str> = v.split(':').collect();
+                        let key = split[0].to_string();
+                        let value = split[1].to_string();
+                        Header { key, value }
+                    })
+                    .collect();
+                Some(headers)
+            }
+        };
+
         match args.request_body {
             None => Ok(Settings {
                 clients: args.clients,
@@ -60,6 +87,7 @@ impl Settings {
                 target: args.target,
                 keep_alive: None,
                 body: None,
+                headers,
             }),
             Some(file) => {
                 let content = fs::read_to_string(&file)
@@ -70,6 +98,7 @@ impl Settings {
                     target: args.target,
                     keep_alive: None,
                     body: Some(content),
+                    headers,
                 })
             }
         }
@@ -105,7 +134,7 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::Operation::{Delete, Get, Head, Patch, Post, Put};
+    use crate::settings::Operation::{Get, Post};
 
     #[test]
     fn should_set_get_as_default_operation() -> Result<()> {
@@ -114,6 +143,7 @@ mod tests {
             request_body: None,
             clients: 0,
             iterations: 0,
+            headers: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -128,6 +158,7 @@ mod tests {
             request_body: None,
             clients: 0,
             iterations: 0,
+            headers: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -142,6 +173,7 @@ mod tests {
             request_body: None,
             clients: 0,
             iterations: 0,
+            headers: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -156,6 +188,7 @@ mod tests {
             request_body: None,
             clients: 0,
             iterations: 0,
+            headers: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -170,6 +203,7 @@ mod tests {
             request_body: None,
             clients: 0,
             iterations: 0,
+            headers: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -184,6 +218,7 @@ mod tests {
             request_body: Some(String::from("foo")),
             clients: 0,
             iterations: 0,
+            headers: None,
         };
         match Settings::from_args(args) {
             Ok(_) => {}
@@ -191,6 +226,49 @@ mod tests {
                 assert_eq!(e.to_string(), "Failed to read file from foo")
             }
         }
+        Ok(())
+    }
+
+    #[test]
+    fn should_set_none_headers_if_not_present() -> Result<()> {
+        let args = Args {
+            target: "FOO https://localhost:3000".to_string(),
+            request_body: None,
+            clients: 0,
+            iterations: 0,
+            headers: None,
+        };
+        let settings = Settings::from_args(args)?;
+        assert_eq!(settings.headers, None);
+        Ok(())
+    }
+
+    #[test]
+    fn should_set_headers() -> Result<()> {
+        let args = Args {
+            target: "FOO https://localhost:3000".to_string(),
+            request_body: None,
+            clients: 0,
+            iterations: 0,
+            headers: Some(vec![
+                "bar:foo".to_string(),
+                "Content-Type:application/json".to_string(),
+            ]),
+        };
+        let settings = Settings::from_args(args)?;
+        assert_eq!(
+            settings.headers,
+            Some(vec![
+                Header {
+                    key: "bar".to_string(),
+                    value: "foo".to_string()
+                },
+                Header {
+                    key: "Content-Type".to_string(),
+                    value: "application/json".to_string()
+                },
+            ])
+        );
         Ok(())
     }
 }

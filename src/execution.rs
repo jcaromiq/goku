@@ -3,6 +3,7 @@ use crate::settings::{Operation, Settings};
 use anyhow::{Context, Result};
 use colored::Colorize;
 use reqwest::Client;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use tokio::sync::mpsc::Sender;
 use tokio::time::Instant;
 
@@ -48,13 +49,35 @@ async fn exec(
         Operation::Put => client.put(settings.target()),
         Operation::Delete => client.delete(settings.target()),
     };
+    let headers_map:HeaderMap = match &settings.headers {
+        None => { HeaderMap::new()}
+        Some(headers) => {
+            let mut headers_map : HeaderMap = HeaderMap::new();
+            headers.iter().for_each(|h| {
+                // si las declaro aqui las str funciona
+                // let name = "key";
+                // let value = "value";
+
+                // en cambio si las asigno desde h me da el error
+                let name = h.key.as_str();
+                let value = h.value.as_str();
+
+                let name = HeaderName::from_static(name);
+                let value = HeaderValue::from_static(value);
+                headers_map.insert(name, value);
+            });
+            headers_map
+        }
+    };
     let request_builder = match &settings.body {
         None => request_builder,
         Some(b) => request_builder
             .header("content-type", "application/json")
             .body(b.to_string()),
     };
-    let response = request_builder.send().await;
+    let response = request_builder
+        .headers(headers_map)
+        .send().await;
     let duration_ms = begin.elapsed().as_millis() as u64;
     match response {
         Ok(r) => {

@@ -46,6 +46,7 @@ Usage: goku [OPTIONS] --target <TARGET>
 Options:
   -t, --target <TARGET>              URL to be requested using an operation [default: GET] Ex. GET http://localhost:3000/
   -r, --request-body <REQUEST_BODY>  File path for the request body
+      --headers <HEADERS>            Headers, multi value in format headerName:HeaderValue
   -c, --clients <CLIENTS>            Number of concurrent clients [default: 1]
   -i, --iterations <ITERATIONS>      Total number of iterations [default: 1]
   -h, --help                         Prints help
@@ -61,6 +62,10 @@ Format: GET https://localhost:3000<br>
 
 Specifies the path of file with the body to send.<br>
 At the moment only json body is allowed
+
+#### `--headers`  Optional
+Specifies the headers to be sent.<br>
+
 
 #### `--clients` `-c`
 
@@ -89,7 +94,7 @@ goku -c 50 -i 1000 --target http://localhost:3000
 ###### Targets with custom headers
 
 ```
-WIP
+goku --target "GET http://localhost:3000" --headers Content-Type:application/json --headers bar:foo 
 ```
 
 ###### Targets with custom bodies
@@ -102,7 +107,8 @@ goku -c 50 -i 1000 -r body.json --target "POST http://localhost:3000"
 ###### Targets with custom bodies and headers
 
 ```
-WIP
+goku -r body.json --target "POST http://localhost:3000" --headers Content-Type:application/json --headers bar:foo 
+
 ```
 
 ###### Output

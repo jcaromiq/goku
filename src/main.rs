@@ -8,7 +8,7 @@ mod benchmark;
 mod execution;
 mod settings;
 
-use anyhow::{Result};
+use anyhow::Result;
 use clap::Parser;
 use hdrhistogram::Histogram;
 
