@@ -3,7 +3,6 @@ use std::str::FromStr;
 use crate::benchmark::BenchmarkResult;
 use crate::settings::{Operation, Settings};
 use anyhow::{Context, Result};
-use colored::Colorize;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::Client;
 use tokio::sync::mpsc::Sender;
@@ -78,41 +77,22 @@ async fn exec(
     let response = request_builder.headers(headers_map).send().await;
     let duration_ms = begin.elapsed().as_millis() as u64;
     match response {
-        Ok(r) => {
-            let status = r.status().as_u16();
-            println!(
-                "[{} {} {} {}] {} {}{}",
-                "Client".bold().green(),
-                num_client.to_string().bold().green(),
-                "Iteration".bold().green(),
-                execution.to_string().bold().green(),
-                status.to_string().bold().yellow(),
-                duration_ms.to_string().cyan(),
-                "ms".cyan()
-            );
-            BenchmarkResult {
-                status: r.status().as_u16(),
-                duration: duration_ms,
-            }
-        }
+        Ok(r) => BenchmarkResult {
+            status: r.status().as_u16(),
+            duration: duration_ms,
+            num_client,
+            execution,
+        },
         Err(e) => {
             let status = match e.status() {
-                None => "client error".to_string(),
-                Some(s) => s.as_u16().to_string(),
+                None => 0,
+                Some(s) => s.as_u16(),
             };
-            println!(
-                "[{} {} {} {}] {} {}{}",
-                "Client".bold().green(),
-                num_client.to_string().bold().green(),
-                "Iteration".bold().green(),
-                execution.to_string().bold().green(),
-                status.bold().yellow(),
-                duration_ms.to_string().cyan(),
-                "ms".cyan()
-            );
             BenchmarkResult {
-                status: 0,
+                status,
                 duration: duration_ms,
+                num_client,
+                execution,
             }
         }
     }

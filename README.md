@@ -1,4 +1,5 @@
-# Goku
+# Goku 
+[![Rust](https://github.com/jcaromiq/goku/actions/workflows/ci.yml/badge.svg)](https://github.com/jcaromiq/goku/actions/workflows/ci.yml)
 
 Goku is a HTTP load testing tool built out of a need to drill HTTP services inspired
 by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/tsenart/vegeta)

@@ -21,12 +21,13 @@ async fn main() -> Result<()> {
 
     let mut report = Report::new();
 
-    let (tx, mut rx) = mpsc::channel(settings.requests);
+    let (benchmark_tx, mut benchmark_rx) = mpsc::channel(settings.requests);
 
     let begin = Instant::now();
-    run(settings.clone(), tx).await?;
+    run(settings.clone(), benchmark_tx).await?;
 
-    while let Some(value) = rx.recv().await {
+    while let Some(value) = benchmark_rx.recv().await {
+        println!("{}", value);
         hist.record(value.duration).expect("");
         report.add_result(value);
     }
