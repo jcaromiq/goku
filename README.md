@@ -61,11 +61,10 @@ Format: GET https://localhost:3000<br>
 #### `--request-body` `-r` Optional
 
 Specifies the path of file with the body to send.<br>
-At the moment only json body is allowed
+
 
 #### `--headers`  Optional
 Specifies the headers to be sent.<br>
-
 
 #### `--clients` `-c`
 
