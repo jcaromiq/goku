@@ -4,8 +4,8 @@ use crate::benchmark::BenchmarkResult;
 use crate::settings::{Operation, Settings};
 use anyhow::{Context, Result};
 use colored::Colorize;
-use reqwest::Client;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use reqwest::Client;
 use tokio::sync::mpsc::Sender;
 use tokio::time::Instant;
 
@@ -51,10 +51,10 @@ async fn exec(
         Operation::Put => client.put(settings.target()),
         Operation::Delete => client.delete(settings.target()),
     };
-    let headers_map:HeaderMap = match &settings.headers {
-        None => { HeaderMap::new()}
+    let headers_map: HeaderMap = match &settings.headers {
+        None => HeaderMap::new(),
         Some(headers) => {
-            let mut headers_map : HeaderMap = HeaderMap::new();
+            let mut headers_map: HeaderMap = HeaderMap::new();
             headers.iter().for_each(|h| {
                 // si las declaro aqui las str funciona
                 // let name = "key";
@@ -73,12 +73,9 @@ async fn exec(
     };
     let request_builder = match &settings.body {
         None => request_builder,
-        Some(b) => request_builder
-            .body(b.to_string()),
+        Some(b) => request_builder.body(b.to_string()),
     };
-    let response = request_builder
-        .headers(headers_map)
-        .send().await;
+    let response = request_builder.headers(headers_map).send().await;
     let duration_ms = begin.elapsed().as_millis() as u64;
     match response {
         Ok(r) => {
