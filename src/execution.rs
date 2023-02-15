@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::benchmark::BenchmarkResult;
 use crate::settings::{Operation, Settings};
 use anyhow::{Context, Result};
@@ -62,8 +64,8 @@ async fn exec(
                 let name = h.key.as_str();
                 let value = h.value.as_str();
 
-                let name = HeaderName::from_static(name);
-                let value = HeaderValue::from_static(value);
+                let name = HeaderName::from_str(name).unwrap();
+                let value = HeaderValue::from_str(value).unwrap();
                 headers_map.insert(name, value);
             });
             headers_map
