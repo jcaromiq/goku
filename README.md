@@ -15,6 +15,12 @@ You can download the latest version of Goku directly to your current directory w
 curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/1.0.0/scripts/install.sh | sh
 ```
 
+### Using Cargo
+```bash
+cargo install goku-bench
+goku --version
+```
+
 ### Manual download
 
 Go to the Goku's [GitHub Releases page](https://github.com/jcaromiq/goku/releases) and download the latest `.tar.gz` file that matches your system. Currently, tarballs are available for the following:

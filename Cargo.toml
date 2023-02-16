@@ -1,5 +1,5 @@
 [package]
-name = "goku"
+name = "goku-bench"
 version = "1.0.0"
 edition = "2021"
 authors = ["Joaquin Caro <me@joaquin-caro.es>"]
@@ -8,12 +8,16 @@ repository = "https://github.com/jcaromiq/goku"
 keywords = ["performance", "http", "benchmark", "load-testing", "performance-testing"]
 license = "MIT"
 
+[[bin]]
+name = "goku"
+path = "src/main.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 reqwest = "0.11.14"
 tokio = {version="1.25.0", features = ["full"] }
 futures = "0.3.26"
-clap = { version="4.1.4", features=["derive"] }
+clap = { version="4.1.6", features=["derive"] }
 hdrhistogram = "7.5.2"
 colored="2.0.0"
 strum = { version = "0.24.1", features = ["derive"] }
