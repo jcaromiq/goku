@@ -55,11 +55,7 @@ async fn exec(
         Some(headers) => {
             let mut headers_map: HeaderMap = HeaderMap::new();
             headers.iter().for_each(|h| {
-                // si las declaro aqui las str funciona
-                // let name = "key";
-                // let value = "value";
 
-                // en cambio si las asigno desde h me da el error
                 let name = h.key.as_str();
                 let value = h.value.as_str();
 
@@ -72,7 +68,7 @@ async fn exec(
     };
     let request_builder = match &settings.body {
         None => request_builder,
-        Some(b) => request_builder.body(b.to_string()),
+        Some(body) => request_builder.body(body.to_string()),
     };
     let response = request_builder.headers(headers_map).send().await;
     let duration_ms = begin.elapsed().as_millis() as u64;
