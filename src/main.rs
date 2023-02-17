@@ -1,7 +1,7 @@
 use crate::benchmark::Report;
 use crate::execution::run;
 use crate::settings::{Args, Settings};
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, watch};
 use tokio::time::Instant;
 
 mod benchmark;
@@ -19,12 +19,21 @@ async fn main() -> Result<()> {
     let mut hist = Histogram::<u64>::new(1).unwrap();
     let settings = Settings::from_args(Args::parse())?;
 
+    let (tx_sigint, rx_sigint) = watch::channel(None);
+
+    ctrlc::set_handler(move || {
+        tx_sigint
+            .send(Some("kill".to_string()))
+            .expect("TODO: panic message");
+    })
+    .expect("Error setting Ctrl-C handler");
+
     let mut report = Report::new();
 
     let (benchmark_tx, mut benchmark_rx) = mpsc::channel(settings.requests);
 
     let begin = Instant::now();
-    run(settings.clone(), benchmark_tx).await?;
+    run(settings.clone(), benchmark_tx, rx_sigint).await?;
 
     while let Some(value) = benchmark_rx.recv().await {
         println!("{}", value);

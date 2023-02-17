@@ -6,9 +6,14 @@ use anyhow::{Context, Result};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::Client;
 use tokio::sync::mpsc::Sender;
+use tokio::sync::watch::Receiver;
 use tokio::time::Instant;
 
-pub async fn run(settings: Settings, tx: Sender<BenchmarkResult>) -> Result<()> {
+pub async fn run(
+    settings: Settings,
+    tx: Sender<BenchmarkResult>,
+    rx_sigint: Receiver<Option<String>>,
+) -> Result<()> {
     let mut clients = Vec::with_capacity(settings.clients);
     for _ in 0..settings.clients {
         let client = Client::builder()
@@ -18,7 +23,13 @@ pub async fn run(settings: Settings, tx: Sender<BenchmarkResult>) -> Result<()> 
         clients.push(client);
     }
     for (id, client) in clients.into_iter().enumerate() {
-        tokio::spawn(exec_iterator(id, settings.clone(), client, tx.clone()));
+        tokio::spawn(exec_iterator(
+            id,
+            settings.clone(),
+            client,
+            tx.clone(),
+            rx_sigint.clone(),
+        ));
     }
     Ok(())
 }
@@ -28,10 +39,20 @@ async fn exec_iterator(
     settings: Settings,
     client: Client,
     tx: Sender<BenchmarkResult>,
+    mut rx_sigint: Receiver<Option<String>>,
 ) {
     for i in 0..settings.requests_by_client() {
-        let r = exec(num_client, i, &client, &settings).await;
-        tx.send(r).await.unwrap();
+        let stop_signal = rx_sigint.changed();
+        let benchmark_result = exec(num_client, i, &client, &settings);
+        let ack_send_result = tx.send(benchmark_result.await);
+
+        match tokio::select! {
+        _ = ack_send_result =>  None,
+        _ = stop_signal => Some(())
+        } {
+            None => {}
+            Some(_) => break
+        }
     }
 }
 
@@ -55,7 +76,6 @@ async fn exec(
         Some(headers) => {
             let mut headers_map: HeaderMap = HeaderMap::new();
             headers.iter().for_each(|h| {
-
                 let name = h.key.as_str();
                 let value = h.value.as_str();
 
