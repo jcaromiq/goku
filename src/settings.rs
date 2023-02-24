@@ -1,6 +1,7 @@
 use crate::settings::Operation::Get;
 use anyhow::{Context, Result};
 use clap::Parser;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::str::FromStr;
 use std::time::Duration;
@@ -11,24 +12,33 @@ use strum::EnumString;
 #[command(version, about, long_about = None)]
 pub struct Args {
     /// URL to be requested using an operation [default: GET] Ex. GET http://localhost:3000/
-    #[arg(short, long)]
-    target: String,
+    #[arg(
+        short,
+        long,
+        conflicts_with = "scenario",
+        required_unless_present = "scenario"
+    )]
+    target: Option<String>,
 
     /// File path for the request body
-    #[arg(short, long)]
+    #[arg(short, long, conflicts_with = "scenario")]
     request_body: Option<String>,
 
     /// Number of concurrent clients
-    #[arg(short, long, default_value_t = 1)]
+    #[arg(short, long, default_value_t = 1, conflicts_with = "scenario")]
     clients: usize,
 
     /// Total number of iterations
-    #[arg(short, long, default_value_t = 1)]
+    #[arg(short, long, default_value_t = 1, conflicts_with = "scenario")]
     iterations: usize,
 
     /// Headers, multi value in format headerName:HeaderValue
-    #[arg(long)]
+    #[arg(long, conflicts_with = "scenario")]
     headers: Option<Vec<String>>,
+
+    /// Scenario file
+    #[arg(long, conflicts_with = "target")]
+    scenario: Option<String>,
 }
 
 #[derive(Eq, PartialEq, Debug, EnumString)]
@@ -43,7 +53,16 @@ pub enum Operation {
     Delete,
 }
 
-#[derive(Clone)]
+impl Args {
+    pub fn to_settings(self) -> Result<Settings> {
+        match self.scenario {
+            None => Settings::from_args(self),
+            Some(_) => Settings::from_file(self.scenario.unwrap()),
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Settings {
     pub clients: usize,
     pub requests: usize,
@@ -53,7 +72,7 @@ pub struct Settings {
     pub headers: Option<Vec<Header>>,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct Header {
     pub key: String,
     pub value: String,
@@ -62,6 +81,13 @@ pub struct Header {
 impl Settings {
     pub fn requests_by_client(&self) -> usize {
         self.requests / self.clients
+    }
+    pub fn from_file(file: String) -> Result<Self> {
+        let content = fs::read_to_string(&file)
+            .with_context(move || format!("Failed to read file from {}", &file))?;
+        let settings: Settings = serde_yaml::from_str(&content)
+            .with_context(move || "Invalid yaml format".to_string())?;
+        Ok(settings)
     }
     pub fn from_args(args: Args) -> Result<Self> {
         let headers = match args.headers {
@@ -84,7 +110,7 @@ impl Settings {
             None => Ok(Settings {
                 clients: args.clients,
                 requests: args.iterations,
-                target: args.target,
+                target: args.target.unwrap(),
                 keep_alive: None,
                 body: None,
                 headers,
@@ -95,7 +121,7 @@ impl Settings {
                 Ok(Settings {
                     clients: args.clients,
                     requests: args.iterations,
-                    target: args.target,
+                    target: args.target.unwrap(),
                     keep_alive: None,
                     body: Some(content),
                     headers,
@@ -139,11 +165,12 @@ mod tests {
     #[test]
     fn should_set_get_as_default_operation() -> Result<()> {
         let args = Args {
-            target: "https://localhost:3000".to_string(),
+            target: Some("https://localhost:3000".to_string()),
             request_body: None,
             clients: 0,
             iterations: 0,
             headers: None,
+            scenario: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -154,11 +181,12 @@ mod tests {
     #[test]
     fn should_get_operation_from_target() -> Result<()> {
         let args = Args {
-            target: "POST https://localhost:3000".to_string(),
+            target: Some("POST https://localhost:3000".to_string()),
             request_body: None,
             clients: 0,
             iterations: 0,
             headers: None,
+            scenario: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -169,11 +197,12 @@ mod tests {
     #[test]
     fn should_get_target_from_target_without_operation() -> Result<()> {
         let args = Args {
-            target: "https://localhost:3000".to_string(),
+            target: Some("https://localhost:3000".to_string()),
             request_body: None,
             clients: 0,
             iterations: 0,
             headers: None,
+            scenario: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -184,11 +213,12 @@ mod tests {
     #[test]
     fn should_get_target_from_target_with_operation() -> Result<()> {
         let args = Args {
-            target: "POST https://localhost:3000".to_string(),
+            target: Some("POST https://localhost:3000".to_string()),
             request_body: None,
             clients: 0,
             iterations: 0,
             headers: None,
+            scenario: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -199,11 +229,12 @@ mod tests {
     #[test]
     fn should_set_get_operation_if_operation_is_not_allowed() -> Result<()> {
         let args = Args {
-            target: "FOO https://localhost:3000".to_string(),
+            target: Some("FOO https://localhost:3000".to_string()),
             request_body: None,
             clients: 0,
             iterations: 0,
             headers: None,
+            scenario: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -214,11 +245,12 @@ mod tests {
     #[test]
     fn should_return_error_if_request_body_file_does_not_exists() -> Result<()> {
         let args = Args {
-            target: "FOO https://localhost:3000".to_string(),
+            target: Some("POST https://localhost:3000".to_string()),
             request_body: Some(String::from("foo")),
             clients: 0,
             iterations: 0,
             headers: None,
+            scenario: None,
         };
         match Settings::from_args(args) {
             Ok(_) => {}
@@ -232,11 +264,12 @@ mod tests {
     #[test]
     fn should_set_none_headers_if_not_present() -> Result<()> {
         let args = Args {
-            target: "FOO https://localhost:3000".to_string(),
+            target: Some("FOO https://localhost:3000".to_string()),
             request_body: None,
             clients: 0,
             iterations: 0,
             headers: None,
+            scenario: None,
         };
         let settings = Settings::from_args(args)?;
         assert_eq!(settings.headers, None);
@@ -246,7 +279,7 @@ mod tests {
     #[test]
     fn should_set_headers() -> Result<()> {
         let args = Args {
-            target: "FOO https://localhost:3000".to_string(),
+            target: Some("FOO https://localhost:3000".to_string()),
             request_body: None,
             clients: 0,
             iterations: 0,
@@ -254,6 +287,7 @@ mod tests {
                 "bar:foo".to_string(),
                 "Content-Type:application/json".to_string(),
             ]),
+            scenario: None,
         };
         let settings = Settings::from_args(args)?;
         assert_eq!(
@@ -261,11 +295,11 @@ mod tests {
             Some(vec![
                 Header {
                     key: "bar".to_string(),
-                    value: "foo".to_string()
+                    value: "foo".to_string(),
                 },
                 Header {
                     key: "Content-Type".to_string(),
-                    value: "application/json".to_string()
+                    value: "application/json".to_string(),
                 },
             ])
         );

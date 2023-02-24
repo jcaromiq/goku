@@ -51,7 +51,7 @@ async fn exec_iterator(
         _ = stop_signal => Some(())
         } {
             None => {}
-            Some(_) => break
+            Some(_) => break,
         }
     }
 }

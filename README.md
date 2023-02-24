@@ -12,7 +12,7 @@ by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/t
 You can download the latest version of Goku directly to your current directory with the following command:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/1.0.0/scripts/install.sh | sh
+curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/1.0.1/scripts/install.sh | sh
 ```
 
 ### Using Cargo
@@ -53,33 +53,50 @@ Usage: goku [OPTIONS] --target <TARGET>
 Options:
   -t, --target <TARGET>              URL to be requested using an operation [default: GET] Ex. GET http://localhost:3000/
   -r, --request-body <REQUEST_BODY>  File path for the request body
-      --headers <HEADERS>            Headers, multi value in format headerName:HeaderValue
   -c, --clients <CLIENTS>            Number of concurrent clients [default: 1]
   -i, --iterations <ITERATIONS>      Total number of iterations [default: 1]
+      --headers <HEADERS>            Headers, multi value in format headerName:HeaderValue
+      --scenario <SCENARIO>          Scenario file
   -h, --help                         Prints help
   -V, --version                      Prints version information
 ```
 
 #### `--target` `-t`
-
 Specifies the operation and url to make the request, default to GET.<br>
 Format: GET https://localhost:3000<br>
 
 #### `--request-body` `-r` Optional
-
 Specifies the path of file with the body to send.<br>
 
+#### `--clients` `-c`
+Specifies the number of concurrent calls to be used, defaults to 1.
+
+#### `--iterations` `-i`
+Specifies the total number of calls to be performed, default to 1.
 
 #### `--headers`  Optional
 Specifies the headers to be sent.<br>
 
-#### `--clients` `-c`
+#### `--scenario`  Optional
+Specifies the scenario file in yaml format.<br>
 
-Specifies the number of concurrent calls to be used, defaults to 1.
+````yaml
+target: POST http://localhost:3000/
+clients: 50
+requests: 1000
+headers:
+  - key: "bar"
+    value: "foo"
+  - key: "Content-Type"
+    value: "application/json"
 
-#### `--iterations` `-i`
+body: "{\"firstName\": \"Terry\",
+        \"lastName\": \"Medhurst\",
+        \"maidenName\": \"Smitham\",
+        \"age\": 50}"
 
-Specifies the total number of calls to be performed, default to 1.
+
+````
 
 #### `--help`
 

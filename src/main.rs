@@ -17,7 +17,8 @@ use colored::Colorize;
 #[tokio::main]
 async fn main() -> Result<()> {
     let mut hist = Histogram::<u64>::new(1).unwrap();
-    let settings = Settings::from_args(Args::parse())?;
+    let arguments = Args::parse();
+    let settings: Settings = arguments.to_settings()?;
 
     let (tx_sigint, rx_sigint) = watch::channel(None);
 
