@@ -1,5 +1,6 @@
 # Goku 
 [![Rust](https://github.com/jcaromiq/goku/actions/workflows/ci.yml/badge.svg)](https://github.com/jcaromiq/goku/actions/workflows/ci.yml)
+[![](https://img.shields.io/crates/v/goku-bench.svg?ts=2)](https://crates.io/crates/goku-bench)
 
 Goku is a HTTP load testing tool built out of a need to drill HTTP services inspired
 by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/tsenart/vegeta)
@@ -151,3 +152,8 @@ Min request time 5 ms
 
 See [LICENSE](LICENSE).
 
+## Donate
+
+If you appreciate all the job done in this project, a small donation is always welcome:
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jcaro)
