@@ -1,5 +1,7 @@
 use colored::Colorize;
+use hdrhistogram::Histogram;
 use std::fmt::{Display, Formatter};
+use std::time::Duration;
 
 pub trait Average {
     fn avg(&self) -> u64;
@@ -39,14 +41,72 @@ pub struct BenchmarkResult {
 
 #[derive(Debug)]
 pub struct Report {
+    clients: usize,
     results: Vec<BenchmarkResult>,
+    hist: Histogram<u64>,
 }
 
 impl Report {
-    pub fn new() -> Self {
-        Report { results: vec![] }
+    pub fn new(clients: usize) -> Self {
+        Report {
+            clients,
+            results: vec![],
+            hist: Histogram::<u64>::new(1).unwrap(),
+        }
     }
     pub fn add_result(&mut self, result: BenchmarkResult) {
+        let duration = result.duration;
         self.results.push(result);
+        self.hist.record(duration).expect("");
+    }
+
+    pub fn show_results(&self, elapsed: Duration) {
+        println!();
+        println!(
+            "{} {}",
+            "Concurrency level".yellow().bold(),
+            self.clients.to_string().purple()
+        );
+        println!(
+            "{} {} {}",
+            "Time taken".yellow().bold(),
+            elapsed.as_secs().to_string().purple(),
+            "seconds".purple()
+        );
+        println!(
+            "{} {}",
+            "Total requests ".yellow().bold(),
+            self.hist.len().to_string().purple()
+        );
+        println!(
+            "{} {} {}",
+            "Mean request time".yellow().bold(),
+            self.hist.mean().to_string().purple(),
+            "ms".purple()
+        );
+        println!(
+            "{} {} {}",
+            "Max request time".yellow().bold(),
+            self.hist.max().to_string().purple(),
+            "ms".purple()
+        );
+        println!(
+            "{} {} {}",
+            "Min request time".yellow().bold(),
+            self.hist.min().to_string().purple(),
+            "ms".purple()
+        );
+        println!(
+            "{} {} {}",
+            "95'th percentile:".yellow().bold(),
+            self.hist.value_at_quantile(0.95).to_string().purple(),
+            "ms".purple()
+        );
+        println!(
+            "{} {} {}",
+            "99.9'th percentile:".yellow().bold(),
+            self.hist.value_at_quantile(0.999).to_string().purple(),
+            "ms".purple()
+        );
     }
 }
