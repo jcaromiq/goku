@@ -33,8 +33,8 @@ async fn main() -> Result<()> {
         println!("{}", value);
         report.add_result(value);
     }
-    let end = begin.elapsed();
+    let elapsed = begin.elapsed();
 
-    report.show_results(end);
+    report.show_results(elapsed);
     Ok(())
 }
