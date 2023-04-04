@@ -29,8 +29,12 @@ pub struct Args {
     clients: usize,
 
     /// Total number of iterations
-    #[arg(short, long, default_value_t = 1, conflicts_with = "scenario")]
+    #[arg(short, long, default_value_t = 1, conflicts_with_all = ["duration", "scenario"])]
     iterations: usize,
+
+    /// Duration of the test in seconds
+    #[arg(short, long, conflicts_with_all = ["iterations", "scenario"])]
+    duration: Option<u64>,
 
     /// Headers, multi value in format headerName:HeaderValue
     #[arg(long, conflicts_with = "scenario")]
@@ -57,7 +61,7 @@ impl Args {
     pub fn to_settings(self) -> Result<Settings> {
         match self.scenario {
             None => Settings::from_args(self),
-            Some(_) => Settings::from_file(self.scenario.unwrap()),
+            Some(file) => Settings::from_file(file),
         }
     }
 }
@@ -70,6 +74,7 @@ pub struct Settings {
     pub keep_alive: Option<Duration>,
     pub body: Option<String>,
     pub headers: Option<Vec<Header>>,
+    pub duration: Option<u64>,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -114,6 +119,7 @@ impl Settings {
                 keep_alive: None,
                 body: None,
                 headers,
+                duration: args.duration,
             }),
             Some(file) => {
                 let content = fs::read_to_string(&file)
@@ -125,6 +131,7 @@ impl Settings {
                     keep_alive: None,
                     body: Some(content),
                     headers,
+                    duration: args.duration,
                 })
             }
         }
@@ -171,6 +178,7 @@ mod tests {
             iterations: 0,
             headers: None,
             scenario: None,
+            duration: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -187,6 +195,7 @@ mod tests {
             iterations: 0,
             headers: None,
             scenario: None,
+            duration: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -203,6 +212,7 @@ mod tests {
             iterations: 0,
             headers: None,
             scenario: None,
+            duration: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -219,6 +229,7 @@ mod tests {
             iterations: 0,
             headers: None,
             scenario: None,
+            duration: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -235,6 +246,7 @@ mod tests {
             iterations: 0,
             headers: None,
             scenario: None,
+            duration: None,
         };
 
         let settings = Settings::from_args(args)?;
@@ -251,6 +263,7 @@ mod tests {
             iterations: 0,
             headers: None,
             scenario: None,
+            duration: None,
         };
         match Settings::from_args(args) {
             Ok(_) => {}
@@ -270,6 +283,7 @@ mod tests {
             iterations: 0,
             headers: None,
             scenario: None,
+            duration: None,
         };
         let settings = Settings::from_args(args)?;
         assert_eq!(settings.headers, None);
@@ -288,6 +302,7 @@ mod tests {
                 "Content-Type:application/json".to_string(),
             ]),
             scenario: None,
+            duration: None,
         };
         let settings = Settings::from_args(args)?;
         assert_eq!(

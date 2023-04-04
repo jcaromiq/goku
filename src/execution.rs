@@ -41,9 +41,51 @@ async fn exec_iterator(
     tx: Sender<BenchmarkResult>,
     mut rx_sigint: Receiver<Option<()>>,
 ) {
-    for i in 0..settings.requests_by_client() {
+    match settings.duration {
+        None => {
+            by_iterations(num_client, &settings, &client, &tx, &mut rx_sigint).await;
+        }
+        Some(duration) => {
+            by_time(num_client, &settings, &client, tx, &mut rx_sigint, duration).await;
+        }
+    }
+}
+
+async fn by_time(
+    num_client: usize,
+    settings: &Settings,
+    client: &Client,
+    tx: Sender<BenchmarkResult>,
+    rx_sigint: &mut Receiver<Option<()>>,
+    duration: u64,
+) {
+    let begin = Instant::now();
+    let mut execution_number = 0;
+    while begin.elapsed().as_secs() < duration {
         let stop_signal = rx_sigint.changed();
-        let benchmark_result = exec(num_client, i, &client, &settings);
+        let benchmark_result = exec(num_client, execution_number, client, settings);
+        let ack_send_result = tx.send(benchmark_result.await);
+        execution_number += 1;
+        match tokio::select! {
+        _ = ack_send_result =>  None,
+        _ = stop_signal => Some(())
+        } {
+            None => {}
+            Some(_) => break,
+        }
+    }
+}
+
+async fn by_iterations(
+    num_client: usize,
+    settings: &Settings,
+    client: &Client,
+    tx: &Sender<BenchmarkResult>,
+    rx_sigint: &mut Receiver<Option<()>>,
+) {
+    for execution_number in 0..settings.requests_by_client() {
+        let stop_signal = rx_sigint.changed();
+        let benchmark_result = exec(num_client, execution_number, client, settings);
         let ack_send_result = tx.send(benchmark_result.await);
 
         match tokio::select! {

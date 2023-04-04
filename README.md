@@ -56,6 +56,7 @@ Options:
   -r, --request-body <REQUEST_BODY>  File path for the request body
   -c, --clients <CLIENTS>            Number of concurrent clients [default: 1]
   -i, --iterations <ITERATIONS>      Total number of iterations [default: 1]
+  -d, --duration <DURATION>          Duration of the test in second
       --headers <HEADERS>            Headers, multi value in format headerName:HeaderValue
       --scenario <SCENARIO>          Scenario file
   -h, --help                         Prints help
@@ -74,6 +75,9 @@ Specifies the number of concurrent calls to be used, defaults to 1.
 
 #### `--iterations` `-i`
 Specifies the total number of calls to be performed, default to 1.
+
+#### `--duration` `-d`
+Specifies the duration of the test in seconds.
 
 #### `--headers`  Optional
 Specifies the headers to be sent.<br>
@@ -113,6 +117,7 @@ Prints version information.
 goku --target "GET http://localhost:3000"
 goku --target http://localhost:3000?foo=bar
 goku -c 50 -i 1000 --target http://localhost:3000
+goku -c 50 --duration 60 --target http://localhost:3000
 ```
 
 ###### Targets with custom headers
