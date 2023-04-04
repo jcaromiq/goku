@@ -1,4 +1,4 @@
-use crate::benchmark::{Report};
+use crate::benchmark::Report;
 use crate::execution::run;
 use crate::settings::{Args, Settings};
 use tokio::sync::{mpsc, watch};
@@ -19,7 +19,7 @@ async fn main() -> Result<()> {
     let (benchmark_tx, mut benchmark_rx) = mpsc::channel(settings.requests);
 
     ctrlc::set_handler(move || {
-        tx_sigint.send(Some("kill".to_string())).unwrap_or(());
+        tx_sigint.send(Some(())).unwrap_or(());
     })?;
 
     run(settings.clone(), benchmark_tx, rx_sigint).await?;

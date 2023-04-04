@@ -12,7 +12,7 @@ use tokio::time::Instant;
 pub async fn run(
     settings: Settings,
     tx: Sender<BenchmarkResult>,
-    rx_sigint: Receiver<Option<String>>,
+    rx_sigint: Receiver<Option<()>>,
 ) -> Result<()> {
     let mut clients = Vec::with_capacity(settings.clients);
     for _ in 0..settings.clients {
@@ -39,7 +39,7 @@ async fn exec_iterator(
     settings: Settings,
     client: Client,
     tx: Sender<BenchmarkResult>,
-    mut rx_sigint: Receiver<Option<String>>,
+    mut rx_sigint: Receiver<Option<()>>,
 ) {
     for i in 0..settings.requests_by_client() {
         let stop_signal = rx_sigint.changed();
