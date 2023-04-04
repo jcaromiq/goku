@@ -1,17 +1,25 @@
 use colored::Colorize;
 use hdrhistogram::Histogram;
 use std::fmt::{Display, Formatter};
-use std::time::Duration;
+use tokio::time::Instant;
 
-pub trait Average {
+pub trait Metrics {
     fn avg(&self) -> u64;
+    fn max(&self) -> u64;
+    fn min(&self) -> u64;
 }
 
-impl Average for Vec<BenchmarkResult> {
+impl Metrics for Vec<BenchmarkResult> {
     fn avg(&self) -> u64 {
         let total: u64 = self.iter().map(|r| r.duration).sum();
         let size: u64 = self.iter().len() as u64;
         total / size
+    }
+    fn max(&self) -> u64 {
+        return self.iter().map(|r| r.duration).max().unwrap_or(0);
+    }
+    fn min(&self) -> u64 {
+        return self.iter().map(|r| r.duration).min().unwrap_or(0);
     }
 }
 
@@ -42,8 +50,9 @@ pub struct BenchmarkResult {
 #[derive(Debug)]
 pub struct Report {
     clients: usize,
-    results: Vec<BenchmarkResult>,
+    pub results: Vec<BenchmarkResult>,
     hist: Histogram<u64>,
+    start: Instant,
 }
 
 impl Report {
@@ -52,6 +61,7 @@ impl Report {
             clients,
             results: vec![],
             hist: Histogram::<u64>::new(1).unwrap(),
+            start: Instant::now(),
         }
     }
     pub fn add_result(&mut self, result: BenchmarkResult) {
@@ -60,7 +70,9 @@ impl Report {
         self.hist.record(duration).expect("");
     }
 
-    pub fn show_results(&self, elapsed: Duration) {
+    pub fn show_results(&self) {
+        let elapsed = &self.start.elapsed();
+
         println!();
         println!(
             "{} {}",
@@ -87,13 +99,13 @@ impl Report {
         println!(
             "{} {} {}",
             "Max request time".yellow().bold(),
-            self.hist.max().to_string().purple(),
+            self.results.max().to_string().purple(),
             "ms".purple()
         );
         println!(
             "{} {} {}",
             "Min request time".yellow().bold(),
-            self.hist.min().to_string().purple(),
+            self.results.min().to_string().purple(),
             "ms".purple()
         );
         println!(

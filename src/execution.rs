@@ -62,7 +62,6 @@ async fn exec(
     client: &Client,
     settings: &Settings,
 ) -> BenchmarkResult {
-    let begin = Instant::now();
     let request_builder = match settings.operation() {
         Operation::Get => client.get(settings.target()),
         Operation::Post => client.post(settings.target()),
@@ -90,7 +89,9 @@ async fn exec(
         None => request_builder,
         Some(body) => request_builder.body(body.to_string()),
     };
-    let response = request_builder.headers(headers_map).send().await;
+    let request = request_builder.headers(headers_map);
+    let begin = Instant::now();
+    let response = request.send().await;
     let duration_ms = begin.elapsed().as_millis() as u64;
     match response {
         Ok(r) => BenchmarkResult {
