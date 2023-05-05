@@ -8,9 +8,13 @@ use std::time::Duration;
 use strum::EnumString;
 
 /// a HTTP benchmarking tool
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Default)]
 #[command(version, about, long_about = None)]
 pub struct Args {
+    /// Runs in verbose mode
+    #[arg(short, long)]
+    verbose: bool,
+
     /// URL to be requested using an operation [default: GET] Ex. GET http://localhost:3000/
     #[arg(
         short,
@@ -75,6 +79,7 @@ pub struct Settings {
     pub body: Option<String>,
     pub headers: Option<Vec<Header>>,
     pub duration: Option<u64>,
+    pub verbose: bool,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -84,6 +89,20 @@ pub struct Header {
 }
 
 impl Settings {
+    pub fn print_banner(&self) {
+        let banner = match &self.duration {
+            None => format!(
+                "kamehameha to {} with {} concurrent clients and {} total iterations",
+                &self.target, &self.clients, &self.requests
+            ),
+            Some(d) => format!(
+                "kamehameha to {} with {} concurrent clients for {} seconds",
+                &self.target, &self.clients, d
+            ),
+        };
+        println!("{banner}");
+    }
+
     pub fn requests_by_client(&self) -> usize {
         self.requests / self.clients
     }
@@ -120,6 +139,7 @@ impl Settings {
                 body: None,
                 headers,
                 duration: args.duration,
+                verbose: args.verbose,
             }),
             Some(file) => {
                 let content = fs::read_to_string(&file)
@@ -132,6 +152,7 @@ impl Settings {
                     body: Some(content),
                     headers,
                     duration: args.duration,
+                    verbose: args.verbose,
                 })
             }
         }
@@ -173,12 +194,7 @@ mod tests {
     fn should_set_get_as_default_operation() -> Result<()> {
         let args = Args {
             target: Some("https://localhost:3000".to_string()),
-            request_body: None,
-            clients: 0,
-            iterations: 0,
-            headers: None,
-            scenario: None,
-            duration: None,
+            ..Default::default()
         };
 
         let settings = Settings::from_args(args)?;
@@ -190,12 +206,7 @@ mod tests {
     fn should_get_operation_from_target() -> Result<()> {
         let args = Args {
             target: Some("POST https://localhost:3000".to_string()),
-            request_body: None,
-            clients: 0,
-            iterations: 0,
-            headers: None,
-            scenario: None,
-            duration: None,
+            ..Default::default()
         };
 
         let settings = Settings::from_args(args)?;
@@ -207,12 +218,7 @@ mod tests {
     fn should_get_target_from_target_without_operation() -> Result<()> {
         let args = Args {
             target: Some("https://localhost:3000".to_string()),
-            request_body: None,
-            clients: 0,
-            iterations: 0,
-            headers: None,
-            scenario: None,
-            duration: None,
+            ..Default::default()
         };
 
         let settings = Settings::from_args(args)?;
@@ -224,12 +230,7 @@ mod tests {
     fn should_get_target_from_target_with_operation() -> Result<()> {
         let args = Args {
             target: Some("POST https://localhost:3000".to_string()),
-            request_body: None,
-            clients: 0,
-            iterations: 0,
-            headers: None,
-            scenario: None,
-            duration: None,
+            ..Default::default()
         };
 
         let settings = Settings::from_args(args)?;
@@ -241,12 +242,7 @@ mod tests {
     fn should_set_get_operation_if_operation_is_not_allowed() -> Result<()> {
         let args = Args {
             target: Some("FOO https://localhost:3000".to_string()),
-            request_body: None,
-            clients: 0,
-            iterations: 0,
-            headers: None,
-            scenario: None,
-            duration: None,
+            ..Default::default()
         };
 
         let settings = Settings::from_args(args)?;
@@ -259,11 +255,7 @@ mod tests {
         let args = Args {
             target: Some("POST https://localhost:3000".to_string()),
             request_body: Some(String::from("foo")),
-            clients: 0,
-            iterations: 0,
-            headers: None,
-            scenario: None,
-            duration: None,
+            ..Default::default()
         };
         match Settings::from_args(args) {
             Ok(_) => {}
@@ -279,11 +271,7 @@ mod tests {
         let args = Args {
             target: Some("FOO https://localhost:3000".to_string()),
             request_body: None,
-            clients: 0,
-            iterations: 0,
-            headers: None,
-            scenario: None,
-            duration: None,
+            ..Default::default()
         };
         let settings = Settings::from_args(args)?;
         assert_eq!(settings.headers, None);
@@ -294,15 +282,11 @@ mod tests {
     fn should_set_headers() -> Result<()> {
         let args = Args {
             target: Some("FOO https://localhost:3000".to_string()),
-            request_body: None,
-            clients: 0,
-            iterations: 0,
             headers: Some(vec![
                 "bar:foo".to_string(),
                 "Content-Type:application/json".to_string(),
             ]),
-            scenario: None,
-            duration: None,
+            ..Default::default()
         };
         let settings = Settings::from_args(args)?;
         assert_eq!(

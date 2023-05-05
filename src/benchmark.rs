@@ -74,6 +74,8 @@ impl Report {
         let elapsed = &self.start.elapsed();
 
         println!();
+        println!();
+        println!();
         println!(
             "{} {}",
             "Concurrency level".yellow().bold(),

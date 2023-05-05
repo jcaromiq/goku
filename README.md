@@ -13,7 +13,7 @@ by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/t
 You can download the latest version of Goku directly to your current directory with the following command:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/1.1.0/scripts/install.sh | sh
+curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/1.1.1/scripts/install.sh | sh
 ```
 
 ### Using Cargo
@@ -52,6 +52,7 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 Usage: goku [OPTIONS] --target <TARGET>
 
 Options:
+  -v, --verbose                      Runs in verbose mode
   -t, --target <TARGET>              URL to be requested using an operation [default: GET] Ex. GET http://localhost:3000/
   -r, --request-body <REQUEST_BODY>  File path for the request body
   -c, --clients <CLIENTS>            Number of concurrent clients [default: 1]

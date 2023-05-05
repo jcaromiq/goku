@@ -1,6 +1,7 @@
 use crate::benchmark::Report;
 use crate::execution::run;
 use crate::settings::{Args, Settings};
+use indicatif::ProgressBar;
 use tokio::sync::{mpsc, watch};
 
 mod benchmark;
@@ -14,6 +15,9 @@ use clap::Parser;
 async fn main() -> Result<()> {
     let settings: Settings = Args::parse().to_settings()?;
     let mut report = Report::new(settings.clients);
+    settings.print_banner();
+
+    let pb = ProgressBar::new(settings.requests as u64);
 
     let (tx_sigint, rx_sigint) = watch::channel(None);
     let (benchmark_tx, mut benchmark_rx) = mpsc::channel(settings.requests);
@@ -24,7 +28,10 @@ async fn main() -> Result<()> {
 
     run(settings.clone(), benchmark_tx, rx_sigint).await?;
     while let Some(value) = benchmark_rx.recv().await {
-        println!("{}", value);
+        match settings.verbose {
+            true => println!("{}", value),
+            false => pb.inc(1),
+        }
         report.add_result(value);
     }
 
