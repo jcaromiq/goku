@@ -29,7 +29,7 @@ strum = { version = "0.24.1", features = ["derive"] }
 anyhow = "1.0.71"
 ctrlc = "3.3.1"
 serde_yaml = "0.9.21"
-serde = { version = "1.0.163", features = ["derive"] }
+serde = { version = "1.0.164", features = ["derive"] }
 rustls = "0.21.1"
 rustls-pemfile = "1.0.2"
 indicatif = "0.17.4"
