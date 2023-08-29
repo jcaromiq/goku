@@ -31,7 +31,7 @@ ctrlc = "3.4.0"
 serde_yaml = "0.9.21"
 serde = { version = "1.0.171", features = ["derive"] }
 rustls = "0.21.6"
-rustls-pemfile = "1.0.2"
+rustls-pemfile = "1.0.3"
 indicatif = "0.17.6"
 
 [dev-dependencies]
