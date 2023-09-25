@@ -32,7 +32,7 @@ serde_yaml = "0.9.25"
 serde = { version = "1.0.188", features = ["derive"] }
 rustls = "0.21.7"
 rustls-pemfile = "1.0.3"
-indicatif = "0.17.6"
+indicatif = "0.17.7"
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"
