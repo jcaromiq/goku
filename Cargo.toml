@@ -14,13 +14,13 @@ path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-reqwest = { version = "0.11.21", default-features = false, features = [
+reqwest = { version = "0.11.22", default-features = false, features = [
     "rustls-tls",
     "rustls-native-certs",
     "json",
     "stream",
 ] }
-tokio = { version = "1.32.0", features = ["full"] }
+tokio = { version = "1.33.0", features = ["full"] }
 futures = "0.3.28"
 clap = { version = "4.4.6", features = ["derive"] }
 hdrhistogram = "7.5.2"
@@ -29,7 +29,7 @@ strum = { version = "0.25.0", features = ["derive"] }
 anyhow = "1.0.75"
 ctrlc = "3.4.1"
 serde_yaml = "0.9.25"
-serde = { version = "1.0.188", features = ["derive"] }
+serde = { version = "1.0.189", features = ["derive"] }
 rustls = "0.21.7"
 rustls-pemfile = "1.0.3"
 indicatif = "0.17.7"
