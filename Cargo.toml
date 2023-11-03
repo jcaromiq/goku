@@ -21,16 +21,16 @@ reqwest = { version = "0.11.22", default-features = false, features = [
     "stream",
 ] }
 tokio = { version = "1.33.0", features = ["full"] }
-futures = "0.3.28"
-clap = { version = "4.4.6", features = ["derive"] }
+futures = "0.3.29"
+clap = { version = "4.4.7", features = ["derive"] }
 hdrhistogram = "7.5.2"
 colored = "2.0.4"
 strum = { version = "0.25.0", features = ["derive"] }
 anyhow = "1.0.75"
 ctrlc = "3.4.1"
-serde_yaml = "0.9.25"
+serde_yaml = "0.9.27"
 serde = { version = "1.0.190", features = ["derive"] }
-rustls = "0.21.7"
+rustls = "0.21.8"
 rustls-pemfile = "1.0.3"
 indicatif = "0.17.7"
 
