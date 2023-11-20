@@ -23,7 +23,7 @@ reqwest = { version = "0.11.22", default-features = false, features = [
 tokio = { version = "1.33.0", features = ["full"] }
 futures = "0.3.29"
 clap = { version = "4.4.7", features = ["derive"] }
-hdrhistogram = "7.5.2"
+hdrhistogram = "7.5.4"
 colored = "2.0.4"
 strum = { version = "0.25.0", features = ["derive"] }
 anyhow = "1.0.75"
