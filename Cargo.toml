@@ -20,7 +20,7 @@ reqwest = { version = "0.11.22", default-features = false, features = [
     "json",
     "stream",
 ] }
-tokio = { version = "1.33.0", features = ["full"] }
+tokio = { version = "1.35.1", features = ["full"] }
 futures = "0.3.29"
 clap = { version = "4.4.7", features = ["derive"] }
 hdrhistogram = "7.5.2"
