@@ -5,7 +5,7 @@
 Goku is a HTTP load testing tool built out of a need to drill HTTP services inspired
 by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/tsenart/vegeta)
 
-![Goku](https://raw.githubusercontent.com/jcaromiq/goku/assets/goku.png)
+![Goku](https://raw.githubusercontent.com/jcaromiq/goku/main/assets/goku.png)
 
 ## Install
 ### Automatic download (Linux, OSX, WSL)
