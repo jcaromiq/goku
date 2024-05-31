@@ -41,7 +41,7 @@ impl Display for BenchmarkResult {
 
 #[derive(Debug)]
 pub struct BenchmarkResult {
-    pub status: u16,
+    pub status: String,
     pub duration: u64,
     pub execution: usize,
     pub num_client: usize,

@@ -1,13 +1,14 @@
 use std::str::FromStr;
 
-use crate::benchmark::BenchmarkResult;
-use crate::settings::{Operation, Settings};
 use anyhow::{Context, Result};
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::Client;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use tokio::sync::mpsc::Sender;
 use tokio::sync::watch::Receiver;
 use tokio::time::Instant;
+
+use crate::benchmark::BenchmarkResult;
+use crate::settings::{Operation, Settings};
 
 pub async fn run(
     settings: Settings,
@@ -137,15 +138,17 @@ async fn exec(
     let duration_ms = begin.elapsed().as_millis() as u64;
     match response {
         Ok(r) => BenchmarkResult {
-            status: r.status().as_u16(),
+            status: r.status().to_string(),
             duration: duration_ms,
             num_client,
             execution,
         },
         Err(e) => {
             let status = match e.status() {
-                None => 0,
-                Some(s) => s.as_u16(),
+                None => {
+                    "Failed to connect".to_string()
+                }
+                Some(s) => s.to_string(),
             };
             BenchmarkResult {
                 status,
