@@ -564,7 +564,7 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "goku-bench"
-version = "1.1.4"
+version = "1.1.5"
 dependencies = [
  "anyhow",
  "clap",
