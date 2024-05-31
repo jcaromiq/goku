@@ -18,6 +18,7 @@ pub async fn run(
     let mut clients = Vec::with_capacity(settings.clients);
     for _ in 0..settings.clients {
         let client = Client::builder()
+            .danger_accept_invalid_certs(true)
             .tcp_keepalive(settings.keep_alive)
             .build()
             .with_context(|| "Can not create http Client".to_string())?;
