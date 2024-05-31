@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Compile and release
-        uses: jcaromiq/rust-build.action@v1.4.4
+        uses: jcaromiq/rust-build.action@v1.4.5
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
