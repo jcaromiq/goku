@@ -10,17 +10,28 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  Build:
+    name: release ${{ matrix.target }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-gnu
+            archive: tar.gz
+          - target: x86_64-unknown-linux-musl
+            archive: tar.gz
+          - target: x86_64-apple-darwin
+            archive: tar.gz
     steps:
-      - uses: actions/checkout@v3
-      - name: Test
-        run: cargo test --verbose
-
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build
-        run: rustup target add x86_64-unknown-linux-musl && cargo build --verbose --target x86_64-unknown-linux-musl
-
+      - uses: actions/checkout@master
+      - name: Compile and release
+        uses: rust-build/rust-build.action@v1.4.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          TOOLCHAIN_VERSION: 1.76.0
+          RUSTTARGET: ${{ matrix.target }}
+          ARCHIVE_TYPES: ${{ matrix.archive }}
+          EXTRA_FILES: "README.md LICENSE"
+          UPLOAD_MODE: "none"
