@@ -60,7 +60,7 @@ impl Report {
         Report {
             clients,
             results: vec![],
-            hist: Histogram::<u64>::new(1).unwrap(),
+            hist: Histogram::<u64>::new(5).unwrap(),
             start: Instant::now(),
         }
     }
