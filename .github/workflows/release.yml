@@ -19,10 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Compile and release
-        uses: jcaromiq/rust-build.action@v1.4.5
+        uses: rust-build/rust-build.action@v1.4.5
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
+          STATIC_LINKING: false
           TOOLCHAIN_VERSION: 1.76.0
           RUSTTARGET: ${{ matrix.target }}
           ARCHIVE_TYPES: ${{ matrix.archive }}
