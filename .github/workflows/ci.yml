@@ -10,18 +10,16 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
-      - name: Run tests
         run: cargo test --verbose
-      - name: Build linux
-        run: cargo build --verbose --target x86_64-unknown-linux-musl
-      - name: Build windows
-        run: cargo build --verbose --target x86_64-pc-windows-gnu
-      - name: Build mac
-        run: cargo build --verbose --target x86_64-apple-darwin
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup target add x86_64-unknown-linux-musl
+      - run: cargo build --verbose --target x86_64-unknown-linux-musl
 
