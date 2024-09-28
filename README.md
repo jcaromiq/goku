@@ -2,10 +2,15 @@
 [![Rust](https://github.com/jcaromiq/goku/actions/workflows/ci.yml/badge.svg)](https://github.com/jcaromiq/goku/actions/workflows/ci.yml)
 [![](https://img.shields.io/crates/v/goku-bench.svg?ts=2)](https://crates.io/crates/goku-bench)
 
-Goku is a HTTP load testing tool built out of a need to drill HTTP services inspired
-by [drill](https://github.com/fcsonline/drill) and [vegeta](https://github.com/tsenart/vegeta)
-
 ![Goku](https://raw.githubusercontent.com/jcaromiq/goku/main/assets/goku.png)
+
+Goku is a high-performance, scalable HTTP load-testing tool designed for benchmarking and performance analysis of web services. Inspired by tools like [Drill](https://github.com/fcsonline/drill) and [Vegeta](https://github.com/tsenart/vegeta), Goku offers modern features and simplicity for engineers to simulate and analyze traffic efficiently.
+
+## Features
+* Fast and scalable HTTP load testing
+* Supports structured, real-time metrics
+* Detailed performance analytics
+    
 
 ## Install
 ### Automatic download (Linux, OSX, WSL)
