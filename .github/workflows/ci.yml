@@ -31,7 +31,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
           STATIC_LINKING: false
-          TOOLCHAIN_VERSION: 1.76.0
+          TOOLCHAIN_VERSION: 1.82.0
           RUSTTARGET: ${{ matrix.target }}
           ARCHIVE_TYPES: ${{ matrix.archive }}
           EXTRA_FILES: "README.md LICENSE"
