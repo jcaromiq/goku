@@ -40,5 +40,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
+          extra-files: README.md
           executable-name: goku
           target: ${{ matrix.platform.target }}
