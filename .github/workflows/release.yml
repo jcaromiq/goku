@@ -29,14 +29,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Build binary
-        uses: houseabsolute/actions-rust-cross@v0
+        uses: houseabsolute/actions-rust-cross@v0.0.15
         with:
           command: "build"
           target: ${{ matrix.platform.target }}
           args: "--locked --release"
           strip: true
       - name: Publish artifacts and release
-        uses: houseabsolute/actions-rust-release@v0
+        uses: houseabsolute/actions-rust-release@v0.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
