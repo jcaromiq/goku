@@ -18,7 +18,7 @@ Goku is a high-performance, scalable HTTP load-testing tool designed for benchma
 You can download the latest version of Goku directly to your current directory with the following command:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/1.1.6/scripts/install.sh | sh
+curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/v1.1.7/scripts/install.sh | sh
 ```
 
 ### Using Cargo

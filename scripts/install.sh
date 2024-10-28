@@ -10,7 +10,7 @@ set -u
 BINARY_DOWNLOAD_PREFIX="https://github.com/jcaromiq/goku/releases/download"
 # Goku version defined in goku's Cargo.toml
 # Note: Change this line manually during the release steps.
-PACKAGE_VERSION="1.1.6"
+PACKAGE_VERSION="v1.1.7"
 
 download_binary() {
     downloader --check
@@ -47,7 +47,7 @@ download_binary() {
             _ext=".exe"
             ;;
     esac
-    _tardir="goku_${DOWNLOAD_VERSION}_${_arch}"
+    _tardir="goku-${_arch}"
     echo $_tardir
     _url="$BINARY_DOWNLOAD_PREFIX/$DOWNLOAD_VERSION/${_tardir}.tar.gz"
     _dir="$(mktemp -d 2>/dev/null || ensure mktemp -d -t goku)"
@@ -106,15 +106,15 @@ get_architecture() {
 
     case "$_ostype" in
         Linux)
-            _ostype=unknown-linux-musl
+            _ostype=Linux-musl
             ;;
 
         Darwin)
-            _ostype=apple-darwin
+            _ostype=macOS
             ;;
 
         MINGW* | MSYS* | CYGWIN*)
-            _ostype=pc-windows-msvc
+            _ostype=Windows-msvc
             ;;
 
         *)
@@ -130,7 +130,7 @@ get_architecture() {
 
     esac
 
-    _arch="$_cputype-$_ostype"
+    _arch="$_ostype-$_cputype"
 
     RETVAL="$_arch"
 }
