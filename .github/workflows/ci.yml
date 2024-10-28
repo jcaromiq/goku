@@ -24,7 +24,6 @@ jobs:
           - target: x86_64-apple-darwin
             archive: tar.gz
     steps:
-      - uses: ilammy/setup-nasm@v1.5.1
       - uses: actions/checkout@master
       - name: Compile and release
         uses: rust-build/rust-build.action@v1.4.5
