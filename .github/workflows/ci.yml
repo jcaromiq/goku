@@ -11,7 +11,7 @@ env:
 
 jobs:
   release:
-    name: Release - ${{ matrix.platform.os-name }}
+    name: CI - ${{ matrix.platform.os-name }}
     strategy:
       matrix:
         platform:
