@@ -28,7 +28,7 @@ anyhow = "1.0.91"
 ctrlc = "3.4.5"
 serde_yaml = "0.9.34"
 serde = { version = "1.0.214", features = ["derive"] }
-rustls = { version = "0.23.16", default-features = false, features = ["std", "logging", "std", "tls12"] }
+rustls = { version = "0.23.19", default-features = false, features = ["std", "logging", "std", "tls12"] }
 rustls-pemfile = "2.2.0"
 indicatif = "0.17.8"
 
