@@ -65,6 +65,7 @@ Options:
   -d, --duration <DURATION>          Duration of the test in second
       --headers <HEADERS>            Headers, multi value in format headerName:HeaderValue
       --scenario <SCENARIO>          Scenario file
+      --timeout <timeout_ms>         Timeout value in ms, defaults set to 30000
   -h, --help                         Prints help
   -V, --version                      Prints version information
 ```
