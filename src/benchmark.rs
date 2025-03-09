@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use colored::Colorize;
 use hdrhistogram::Histogram;
 use std::fmt::{Display, Formatter};
@@ -70,6 +71,21 @@ impl Report {
         self.hist.record(duration).expect("");
     }
 
+    pub fn oks(&self){
+        let mut frequencies = HashMap::new();
+        for r in &self.results {
+            *frequencies.entry(&r.status).or_insert(0) += 1;
+        }
+        for (word, count) in &frequencies {
+            println!(
+                "{} {}",
+                word.yellow().bold(),
+                count.to_string().purple(),
+            );
+        }
+
+    }
+
     pub fn show_results(&self) {
         let elapsed = &self.start.elapsed();
 
@@ -122,5 +138,9 @@ impl Report {
             self.hist.value_at_quantile(0.999).to_string().purple(),
             "ms".purple()
         );
+
+        self.oks();
+
+
     }
 }

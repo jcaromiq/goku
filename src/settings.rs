@@ -47,6 +47,10 @@ pub struct Args {
     /// Scenario file
     #[arg(long, conflicts_with = "target")]
     scenario: Option<String>,
+
+    /// Timeout in milliseconds
+    #[arg(long, default_value_t = 30000)]
+    timeout: u64,
 }
 
 #[derive(Eq, PartialEq, Debug, EnumString)]
@@ -80,6 +84,7 @@ pub struct Settings {
     pub headers: Option<Vec<Header>>,
     pub duration: Option<u64>,
     pub verbose: bool,
+    pub timeout:Duration
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -140,6 +145,7 @@ impl Settings {
                 headers,
                 duration: args.duration,
                 verbose: args.verbose,
+                timeout: Duration::from_millis(args.timeout)
             }),
             Some(file) => {
                 let content = fs::read_to_string(&file)
@@ -153,6 +159,7 @@ impl Settings {
                     headers,
                     duration: args.duration,
                     verbose: args.verbose,
+                    timeout: Duration::from_millis(args.timeout)
                 })
             }
         }
