@@ -13,24 +13,24 @@ name = "goku"
 path = "src/main.rs"
 
 [dependencies]
-reqwest = { version = "0.12.9", default-features = false, features = [
+reqwest = { version = "0.12.12", default-features = false, features = [
     "rustls-tls",
     "json",
     "stream",
 ] }
-tokio = { version = "1.41.0", features = ["full"] }
+tokio = { version = "1.44.0", features = ["full"] }
 futures = "0.3.31"
-clap = { version = "4.5.20", features = ["derive"] }
+clap = { version = "4.5.31", features = ["derive"] }
 hdrhistogram = "7.5.4"
 colored = "2.1.0"
-strum = { version = "0.26.3", features = ["derive"] }
-anyhow = "1.0.91"
+strum = { version = "0.27.1", features = ["derive"] }
+anyhow = "1.0.97"
 ctrlc = "3.4.5"
 serde_yaml = "0.9.34"
-serde = { version = "1.0.214", features = ["derive"] }
-rustls = { version = "0.23.16", default-features = false, features = ["std", "logging", "std", "tls12"] }
+serde = { version = "1.0.218", features = ["derive"] }
+rustls = { version = "0.23.23", default-features = false, features = ["std", "logging", "std", "tls12"] }
 rustls-pemfile = "2.2.0"
-indicatif = "0.17.8"
+indicatif = "0.17.11"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
