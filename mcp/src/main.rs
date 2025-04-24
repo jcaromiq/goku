@@ -7,7 +7,7 @@ use crate::mcp_goku::GokuMcpServer;
 #[tokio::main]
 async fn main() -> Result<()> {
 
-    let service = GokuMcpServer::new().serve(stdio()).await.inspect_err(|e| {
+    let service = GokuMcpServer::new().serve(stdio()).await.inspect_err(|_| {
 
     })?;
 

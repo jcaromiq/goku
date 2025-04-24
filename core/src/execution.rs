@@ -68,7 +68,7 @@ async fn by_time(
         match rx_sigint {
             None => {
                 let benchmark_result = exec(num_client, execution_number, client, settings);
-                let ack_send_result = tx.send(benchmark_result.await);
+                let _ = tx.send(benchmark_result.await).await;
                 execution_number += 1;
             }
             Some(rx) => {

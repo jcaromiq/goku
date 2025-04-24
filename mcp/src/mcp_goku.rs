@@ -3,7 +3,7 @@ use goku_core::execution::run;
 use goku_core::settings::Settings;
 use rmcp::{const_string, model::*, schemars, tool, Error as McpError, Error, ServerHandler};
 use std::time::Duration;
-use tokio::sync::{mpsc, watch};
+use tokio::sync::{mpsc};
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub struct StructRequest {
