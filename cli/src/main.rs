@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
         tx_sigint.send(Some(())).unwrap_or(());
     })?;
 
-    run(settings.clone(), benchmark_tx, rx_sigint).await?;
+    run(settings.clone(), benchmark_tx, Some(rx_sigint)).await?;
     while let Some(value) = benchmark_rx.recv().await {
         match settings.verbose {
             true => println!("{}", DisplayableBenchmarkResult(&value)),

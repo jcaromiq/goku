@@ -1,0 +1,29 @@
+[package]
+name = "goku-mcp"
+version = "1.1.8"
+edition = "2021"
+authors = ["Joaquin Caro <me@joaquin-caro.es>"]
+description = "mcp for Goku"
+repository = "https://github.com/jcaromiq/goku"
+license = "MIT"
+
+[[bin]]
+name = "goku-mcp"
+path = "src/main.rs"
+
+[dependencies]
+goku-core = { path = "../core" }
+rmcp = { version = "0.1.0", features = ["transport-io", "server"] }
+tokio = { version = "1.44.2", features = ["macros", "rt", "rt-multi-thread", "io-std", "signal"] }
+serde = { version = "1.0.219", features = ["derive"] }
+anyhow = "1.0.98"
+schemars = { version = "0.8.22", optional = true }
+
+
+
+[profile.release]
+strip = true
+opt-level = 'z'
+lto = true
+codegen-unit = 1
+panic = 'abort'
