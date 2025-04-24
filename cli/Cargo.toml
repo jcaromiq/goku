@@ -1,0 +1,30 @@
+[package]
+name = "goku-bench"
+version = "1.1.8"
+edition = "2021"
+authors = ["Joaquin Caro <me@joaquin-caro.es>"]
+description = "Goku is an HTTP load testing application written in Rust "
+repository = "https://github.com/jcaromiq/goku"
+keywords = ["performance", "http", "benchmark", "load-testing", "performance-testing"]
+license = "MIT"
+
+[[bin]]
+name = "goku"
+path = "src/main.rs"
+
+[dependencies]
+goku-core = { path = "../core" }
+tokio = { version = "1.44.0", features = ["full"] }
+clap = { version = "4.5.31", features = ["derive"] }
+colored = "3.0.0"
+anyhow = "1.0.97"
+ctrlc = "3.4.5"
+indicatif = "0.17.11"
+
+
+[profile.release]
+strip = true
+opt-level = 'z'
+lto = true
+codegen-unit = 1
+panic = 'abort'
