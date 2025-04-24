@@ -113,7 +113,7 @@ pub fn show_results(r: Report) {
 
 struct DisplayableBenchmarkResult<'a>(&'a BenchmarkResult);
 
-impl<'a> Display for DisplayableBenchmarkResult<'a> {
+impl Display for DisplayableBenchmarkResult<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let report = format!(
             "[{} {} {} {}] {} {}{}",

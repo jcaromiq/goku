@@ -57,7 +57,7 @@ impl Settings {
         }
         match slices.first() {
             None => Get,
-            Some(op) => Operation::from_str(&op.to_uppercase()).unwrap_or_else(|_| Get),
+            Some(op) => Operation::from_str(&op.to_uppercase()).unwrap_or(Get),
         }
     }
     pub fn target(&self) -> String {
