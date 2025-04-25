@@ -15,7 +15,7 @@ path = "src/main.rs"
 [dependencies]
 goku-core = { path = "../core" }
 tokio = { version = "1.44.0", features = ["full"] }
-clap = { version = "4.5.31", features = ["derive"] }
+clap = { version = "4.5.37", features = ["derive"] }
 colored = "3.0.0"
 anyhow = "1.0.97"
 ctrlc = "3.4.5"
