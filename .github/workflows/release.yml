@@ -39,13 +39,17 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: "--locked --release"
           strip: true
-      - name: Publish artifacts and release
+      - name: Publish artifacts and release goku-cli
         uses: houseabsolute/actions-rust-release@v0.0.5
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
-          extra-files:
-            README.md
-            goku-mcp*
           executable-name: goku
+          target: ${{ matrix.platform.target }}
+      - name: Publish artifacts and release goku-mcp
+        uses: houseabsolute/actions-rust-release@v0.0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          executable-name: goku-mcp
           target: ${{ matrix.platform.target }}
