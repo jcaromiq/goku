@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
 use anyhow::{Context, Result};
-use reqwest::Client;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use reqwest::Client;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::watch::Receiver;
 use tokio::time::Instant;
@@ -13,7 +13,7 @@ use crate::settings::{Operation, Settings};
 pub async fn run(
     settings: Settings,
     tx: Sender<BenchmarkResult>,
-    rx_sigint: Receiver<Option<()>>,
+    rx_sigint: Option<Receiver<Option<()>>>,
 ) -> Result<()> {
     let mut clients = Vec::with_capacity(settings.clients);
     for _ in 0..settings.clients {
@@ -42,7 +42,7 @@ async fn exec_iterator(
     settings: Settings,
     client: Client,
     tx: Sender<BenchmarkResult>,
-    mut rx_sigint: Receiver<Option<()>>,
+    mut rx_sigint: Option<Receiver<Option<()>>>,
 ) {
     match settings.duration {
         None => {
@@ -59,22 +59,31 @@ async fn by_time(
     settings: &Settings,
     client: &Client,
     tx: Sender<BenchmarkResult>,
-    rx_sigint: &mut Receiver<Option<()>>,
+    rx_sigint: &mut Option<Receiver<Option<()>>>,
     duration: u64,
 ) {
     let begin = Instant::now();
     let mut execution_number = 0;
     while begin.elapsed().as_secs() < duration {
-        let stop_signal = rx_sigint.changed();
-        let benchmark_result = exec(num_client, execution_number, client, settings);
-        let ack_send_result = tx.send(benchmark_result.await);
-        execution_number += 1;
-        match tokio::select! {
-        _ = ack_send_result =>  None,
-        _ = stop_signal => Some(())
-        } {
-            None => {}
-            Some(_) => break,
+        match rx_sigint {
+            None => {
+                let benchmark_result = exec(num_client, execution_number, client, settings);
+                let _ = tx.send(benchmark_result.await).await;
+                execution_number += 1;
+            }
+            Some(rx) => {
+                let stop_signal = rx.changed();
+                let benchmark_result = exec(num_client, execution_number, client, settings);
+                let ack_send_result = tx.send(benchmark_result.await);
+                execution_number += 1;
+                match tokio::select! {
+                _ = ack_send_result =>  None,
+                _ = stop_signal => Some(())
+                } {
+                    None => {}
+                    Some(_) => break,
+                }
+            }
         }
     }
 }
@@ -84,19 +93,27 @@ async fn by_iterations(
     settings: &Settings,
     client: &Client,
     tx: &Sender<BenchmarkResult>,
-    rx_sigint: &mut Receiver<Option<()>>,
+    rx_sigint: &mut Option<Receiver<Option<()>>>,
 ) {
     for execution_number in 0..settings.requests_by_client() {
-        let stop_signal = rx_sigint.changed();
-        let benchmark_result = exec(num_client, execution_number, client, settings);
-        let ack_send_result = tx.send(benchmark_result.await);
+        match rx_sigint {
+            None => {
+                let benchmark_result = exec(num_client, execution_number, client, settings).await;
+                let _ = tx.send(benchmark_result).await;
+            }
+            Some(rx) => {
+                let benchmark_result = exec(num_client, execution_number, client, settings).await;
+                let stop_signal = rx.changed();
+                let ack_send_result = tx.send(benchmark_result);
 
-        match tokio::select! {
-        _ = ack_send_result =>  None,
-        _ = stop_signal => Some(())
-        } {
-            None => {}
-            Some(_) => break,
+                match tokio::select! {
+                    _ = ack_send_result =>  None,
+                    _ = stop_signal => Some(())
+                } {
+                    None => {}
+                    Some(_) => break,
+                }
+            }
         }
     }
 }
@@ -147,9 +164,7 @@ async fn exec(
         },
         Err(e) => {
             let status = match e.status() {
-                None => {
-                    "Failed to connect".to_string()
-                }
+                None => "Failed to connect".to_string(),
                 Some(s) => s.to_string(),
             };
             BenchmarkResult {
