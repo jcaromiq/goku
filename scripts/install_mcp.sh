@@ -10,11 +10,7 @@ set -u
 BINARY_DOWNLOAD_PREFIX="https://github.com/jcaromiq/goku/releases/download"
 # Goku version defined in goku's Cargo.toml
 # Note: Change this line manually during the release steps.
-<<<<<<< HEAD
 PACKAGE_VERSION="v2.0.1"
-=======
-PACKAGE_VERSION="v2.0.0"
->>>>>>> e7c38590fb8ffcd2eee35a52b9bc016a577d50ff
 
 download_binary() {
     downloader --check
