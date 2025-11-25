@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
     let pb = ProgressBar::new(settings.requests as u64);
 
     let (tx_sigint, rx_sigint) = watch::channel(None);
-    let (benchmark_tx, mut benchmark_rx) = mpsc::channel(settings.requests);
+    let (benchmark_tx, mut benchmark_rx) = mpsc::channel(settings.requests as usize);
 
     ctrlc::set_handler(move || {
         tx_sigint.send(Some(())).unwrap_or(());

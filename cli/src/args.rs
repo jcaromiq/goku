@@ -27,11 +27,11 @@ pub struct Args {
 
     /// Number of concurrent clients
     #[arg(short, long, default_value_t = 1, conflicts_with = "scenario")]
-    clients: usize,
+    clients: i32,
 
     /// Total number of iterations
     #[arg(short, long, default_value_t = 1, conflicts_with_all = ["duration", "scenario"])]
-    iterations: usize,
+    iterations: i32,
 
     /// Duration of the test in seconds
     #[arg(short, long, conflicts_with_all = ["iterations", "scenario"])]

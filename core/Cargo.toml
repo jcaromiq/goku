@@ -14,12 +14,12 @@ reqwest = { version = "0.12.12", default-features = false, features = [
     "json",
     "stream",
 ] }
-tokio = { version = "1.44.0", features = ["full"] }
+tokio = { version = "1.48.0", features = ["full"] }
 hdrhistogram = "7.5.4"
-strum = { version = "0.27.1", features = ["derive"] }
-anyhow = "1.0.97"
+strum = { version = "0.27.2", features = ["derive"] }
+anyhow = "1.0.100"
 serde_yaml = "0.9.34"
-serde = { version = "1.0.218", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 
 [dev-dependencies]
 

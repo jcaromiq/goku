@@ -8,8 +8,8 @@ use crate::settings::Operation::Get;
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Settings {
-    pub clients: usize,
-    pub requests: usize,
+    pub clients: i32,
+    pub requests: i32,
     pub target: String,
     pub keep_alive: Option<Duration>,
     pub body: Option<String>,
@@ -39,7 +39,7 @@ pub enum Operation {
 
 impl Settings {
     
-    pub fn requests_by_client(&self) -> usize {
+    pub fn requests_by_client(&self) -> i32 {
         self.requests / self.clients
     }
     pub fn from_file(file: String) -> anyhow::Result<Self> {

@@ -15,7 +15,7 @@ pub async fn run(
     tx: Sender<BenchmarkResult>,
     rx_sigint: Option<Receiver<Option<()>>>,
 ) -> Result<()> {
-    let mut clients = Vec::with_capacity(settings.clients);
+    let mut clients = Vec::with_capacity(settings.clients as usize);
     for _ in 0..settings.clients {
         let client = Client::builder()
             .timeout(settings.timeout)
@@ -120,7 +120,7 @@ async fn by_iterations(
 
 async fn exec(
     num_client: usize,
-    execution: usize,
+    execution: i32,
     client: &Client,
     settings: &Settings,
 ) -> BenchmarkResult {

@@ -13,11 +13,11 @@ path = "src/main.rs"
 
 [dependencies]
 goku-core = { path = "../core" }
-rmcp = { version = "0.1.5", features = ["transport-io", "server"] }
-tokio = { version = "1.44.2", features = ["macros", "rt", "rt-multi-thread", "io-std", "signal"] }
-serde = { version = "1.0.219", features = ["derive"] }
-anyhow = "1.0.98"
-schemars = { version = "0.8.22", optional = true }
+rmcp = { version = "0.9.1", features = ["transport-io", "server"] }
+tokio = { version = "1.48.0", features = ["macros", "rt", "rt-multi-thread", "io-std", "signal"] }
+serde = { version = "1.0.228", features = ["derive"] }
+anyhow = "1.0.100"
+schemars = { version = "1.1.0"}
 
 
 

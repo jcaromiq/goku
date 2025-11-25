@@ -26,20 +26,20 @@ impl Metrics for Vec<BenchmarkResult> {
 pub struct BenchmarkResult {
     pub status: String,
     pub duration: u64,
-    pub execution: usize,
+    pub execution: i32,
     pub num_client: usize,
 }
 
 #[derive(Debug)]
 pub struct Report {
-    pub clients: usize,
+    pub clients: i32,
     pub results: Vec<BenchmarkResult>,
     pub hist: Histogram<u64>,
     pub start: Instant,
 }
 
 impl Report {
-    pub fn new(clients: usize) -> Self {
+    pub fn new(clients: i32) -> Self {
         Report {
             clients,
             results: vec![],
