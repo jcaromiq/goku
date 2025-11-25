@@ -1,10 +1,9 @@
 use goku_core::benchmark::{Metrics, Report};
 use goku_core::execution::run;
 use goku_core::settings::Settings;
-use rmcp::handler::server::router::prompt::PromptRouter;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::{
-    handler::server::tool::ToolRouter, model::*, prompt_handler, prompt_router, tool, tool_handler,
+    handler::server::tool::ToolRouter, model::*, prompt_router, tool, tool_handler,
     tool_router, ErrorData as McpError, ServerHandler,
 };
 use std::time::Duration;
