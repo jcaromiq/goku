@@ -13,7 +13,7 @@ name = "goku"
 path = "src/main.rs"
 
 [dependencies]
-goku-core = { path = "../core" }
+goku-core = { version = "2.0.1",path = "../core" }
 tokio = { version = "1.48.0", features = ["full"] }
 clap = { version = "4.5.53", features = ["derive"] }
 colored = "3.0.0"
