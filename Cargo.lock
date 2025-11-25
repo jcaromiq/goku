@@ -477,7 +477,7 @@ dependencies = [
 
 [[package]]
 name = "goku-bench"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -490,7 +490,7 @@ dependencies = [
 
 [[package]]
 name = "goku-core"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "anyhow",
  "hdrhistogram",
@@ -503,7 +503,7 @@ dependencies = [
 
 [[package]]
 name = "goku-mcp"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "anyhow",
  "goku-core",

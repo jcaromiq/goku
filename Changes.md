@@ -1,3 +1,10 @@
+## 2.0.1 - 2025-11-25
+### 🚀 Features
+- Added `install_mcp.sh` installation script for downloading and installing Goku mcp server tool
+
+### 📦 Dependency Updates
+Updated all dependencies to their latest stable versions.
+
 ## 2.0.0 - 2025-04-25
 ### 🚀 Features
 Introduced a new MCP module to support Model Context Protocol integration.

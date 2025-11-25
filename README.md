@@ -12,13 +12,13 @@ Goku is a high-performance, scalable HTTP load-testing tool designed for benchma
 * Detailed performance analytics
     
 
-## Install
+## Install cli
 ### Automatic download (Linux, OSX, WSL)
 
 You can download the latest version of Goku directly to your current directory with the following command:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/v2.0.0/scripts/install.sh | sh
+curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/v2.0.1/scripts/install.sh | sh
 ```
 
 ### Using Cargo
@@ -42,6 +42,49 @@ As a requirement, you need `rust` installed:
 ```shell
 $ cargo build --release
 ```
+##  MCP (Model Context Protocol) Support
+Starting from the version 2.0.0, **Goku integrates with the Model Context Protocol (MCP)** — which means you can now use Goku programmatically from an LLM agent or any other MCP-aware client.
+
+MCP is an open standard that allows language models and external tools to interoperate through a unified interface: exposing data sources, file systems, APIs or internal logic as “tools” the model can call. 
+
+### What this enables
+
+- Use Goku from an LLM or AI agent directly — no manual CLI usage required.
+- Combine load testing with automated workflows: for instance, trigger a test, gather metrics, and analyze results from within an agent or script.
+- Seamless integration into broader toolchains, pipelines or “agentic” workflows, exploiting Goku’s performance-testing features programmatically.
+
+### Example usage with an LLM
+
+Once Goku is registered as an MCP tool, you can ask your LLM something like:
+
+> **"Run a performance test on https://github.com with 2 concurrent users and a total of 30 requests, and provide the 95th percentile response time."**
+
+The LLM will translate this into an MCP tool call, run the test through Goku, and return the structured results.
+
+### Automatic download (Linux, OSX, WSL)
+
+You can download the latest version of Goku directly to your current directory with the following command:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/jcaromiq/goku/v2.0.1/scripts/install_mcp.sh | sh
+```
+
+### Using Cargo
+```bash
+cargo install goku-mcp
+```
+
+### Manual download
+
+Go to the Goku's [GitHub Releases page](https://github.com/jcaromiq/goku/releases) and download the latest `.tar.gz` file that matches your system. Currently, tarballs are available for the following:
+
+* Linux (x86_64)
+* macOS (x86_64)
+* Windows (x86_64)
+
+### Run MCP
+You can use the MCP server
+
 
 ## Versioning
 
