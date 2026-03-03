@@ -108,7 +108,10 @@ Options:
   -d, --duration <DURATION>          Duration of the test in second
       --headers <HEADERS>            Headers, multi value in format headerName:HeaderValue
       --scenario <SCENARIO>          Scenario file
-      --timeout <timeout_ms>         Timeout value in ms, defaults set to 30000
+      --timeout <timeout_ms>         Timeout value in ms, defaults to 30000
+      --http2                        Enable HTTP/2 prior knowledge
+      --ramp-up <seconds>            Seconds over which to spread the start of the workers
+      --output <text|json|csv>       Specifies the output format, defaults to text
   -h, --help                         Prints help
   -V, --version                      Prints version information
 ```
@@ -132,6 +135,15 @@ Specifies the duration of the test in seconds.
 #### `--headers`  Optional
 Specifies the headers to be sent.<br>
 
+#### `--http2` Optional
+Forces the client to use HTTP/2 prior knowledge.
+
+#### `--ramp-up` Optional
+Specifies the number of `seconds` over which to smoothly distribute the launch of concurrent clients (e.g., to simulate a progressive traffic spike).
+
+#### `--output` Optional
+Allows to change the output format. Valid values are `text` (default), `json` or `csv`.
+
 #### `--scenario`  Optional
 Specifies the scenario file in yaml format.<br>
 
@@ -139,6 +151,9 @@ Specifies the scenario file in yaml format.<br>
 target: POST http://localhost:3000/
 clients: 50
 requests: 1000
+http2: true
+ramp_up: 5
+output: json
 headers:
   - key: "bar"
     value: "foo"
@@ -149,8 +164,6 @@ body: "{\"firstName\": \"Terry\",
         \"lastName\": \"Medhurst\",
         \"maidenName\": \"Smitham\",
         \"age\": 50}"
-
-
 ````
 
 #### `--help`
@@ -190,17 +203,51 @@ goku -r body.json --target "POST http://localhost:3000" --headers Content-Type:a
 
 ```
 
-###### Output
+###### Targets with customized output and simulated ramp-up
 
 ```
-Concurrency level 50
-Time taken 4 seconds
-Total requests 1000
-Mean request time 169.90099999999998 ms
-Max request time 415 ms
-Min request time 5 ms
-95'th percentile: 319 ms
-99.9'th percentile: 367 ms
+goku -c 100 -i 5000 --ramp-up 10 --output json --target http://localhost:3000
+```
+
+###### Output (Text)
+
+```
+Concurrency level  50
+Time taken         4 seconds
+Total requests     1000
+Requests/sec       250.00 req/s
+Mean               169.90 ms
+Min                5 ms
+Max                415 ms
+p50 (median)       155 ms
+p95                319 ms
+p99.9              367 ms
+
+Status codes
+  2xx  998
+  5xx  2
+```
+
+###### Output (JSON)
+
+```json
+{
+  "concurrency": 50,
+  "duration_secs": 4.12,
+  "total_requests": 1000,
+  "requests_per_sec": 242.72,
+  "mean_ms": 169.90,
+  "min_ms": 5,
+  "max_ms": 415,
+  "p50_ms": 155,
+  "p95_ms": 319,
+  "p999_ms": 367,
+  "status_2xx": 998,
+  "status_4xx": 0,
+  "status_5xx": 2,
+  "status_other": 0,
+  "network_errors": 0
+}
 ```
 
 ## License

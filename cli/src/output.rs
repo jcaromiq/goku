@@ -1,24 +1,5 @@
 use goku_core::benchmark::Report;
 
-#[derive(Debug, Clone, PartialEq, Default)]
-pub enum OutputFormat {
-    #[default]
-    Text,
-    Json,
-    Csv,
-}
-
-impl std::str::FromStr for OutputFormat {
-    type Err = anyhow::Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "json" => Ok(OutputFormat::Json),
-            "csv" => Ok(OutputFormat::Csv),
-            "text" | "plain" => Ok(OutputFormat::Text),
-            other => anyhow::bail!("Unknown output format '{}'. Valid: text, json, csv", other),
-        }
-    }
-}
 
 pub fn print_json(r: &Report) {
     let elapsed = r.start.elapsed().as_secs_f64();

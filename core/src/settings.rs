@@ -3,8 +3,29 @@ use std::str::FromStr;
 use std::time::Duration;
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-use strum::EnumString;
+use strum::{EnumString, Display};
 use crate::settings::Operation::Get;
+
+#[derive(Clone, PartialEq, Serialize, Deserialize, Default, Debug)]
+#[serde(rename_all = "lowercase")]
+pub enum OutputFormat {
+    #[default]
+    Text,
+    Json,
+    Csv,
+}
+
+impl std::str::FromStr for OutputFormat {
+    type Err = anyhow::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "json" => Ok(OutputFormat::Json),
+            "csv" => Ok(OutputFormat::Csv),
+            "text" | "plain" => Ok(OutputFormat::Text),
+            other => anyhow::bail!("Unknown format '{}'", other),
+        }
+    }
+}
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Settings {
@@ -21,6 +42,8 @@ pub struct Settings {
     pub http2: bool,
     #[serde(default)]
     pub ramp_up: Option<u64>,
+    #[serde(default)]
+    pub output: OutputFormat,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]

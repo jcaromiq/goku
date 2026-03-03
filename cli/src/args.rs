@@ -2,8 +2,7 @@ use std::fs;
 use std::time::Duration;
 use anyhow::Context;
 use clap::Parser;
-use goku_core::settings::{Header, Settings};
-use crate::output::OutputFormat;
+use goku_core::settings::{Header, Settings, OutputFormat};
 
 // a HTTP benchmarking tool
 #[derive(Parser, Debug, Default)]
@@ -47,29 +46,30 @@ pub struct Args {
     scenario: Option<String>,
 
     /// Timeout in milliseconds
-    #[arg(long, default_value_t = 30000)]
+    #[arg(long, default_value_t = 30000, conflicts_with = "scenario")]
     timeout: u64,
 
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, conflicts_with = "scenario")]
     http2: bool,
 
     #[arg(long, conflicts_with = "scenario")]
     ramp_up: Option<u64>,
 
-    #[arg(long, default_value = "text")]
+    /// Output format: text (default), json, csv
+    #[arg(long, default_value = "text", conflicts_with = "scenario")]
     output: String,
 }
 
 impl Args {
-    pub fn output_format(&self) -> OutputFormat {
-        self.output.parse().unwrap_or_default()
-    }
-
     pub fn to_settings(self) -> anyhow::Result<Settings> {
-        match self.scenario {
-            None => Self::from_args(self),
-            Some(file) => Settings::from_file(file),
-        }
+        let output_format = self.output.parse().unwrap_or_default();
+        let mut settings = match self.scenario {
+            None => Self::from_args(self)?,
+            Some(file) => Settings::from_file(file)?,
+        };
+
+        settings.output = output_format;
+        Ok(settings)
     }
 
     pub fn from_args(args: Args) -> anyhow::Result<Settings> {
@@ -102,6 +102,7 @@ impl Args {
                 timeout: Duration::from_millis(args.timeout),
                 http2: args.http2,
                 ramp_up: args.ramp_up,
+                output: Default::default(),
             }),
             Some(file) => {
                 let content = fs::read_to_string(&file)
@@ -118,6 +119,7 @@ impl Args {
                     timeout: Duration::from_millis(args.timeout),
                     http2: args.http2,
                     ramp_up: args.ramp_up,
+                    output: Default::default(),
                 })
             }
         }

@@ -7,13 +7,13 @@ use std::time::Duration;
 use tokio::sync::{mpsc, watch};
 
 use crate::args::Args;
-use crate::output::{OutputFormat, print_csv, print_json};
+use crate::output::{print_csv, print_json};
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
 use goku_core::benchmark::{BenchmarkResult, Metrics, Report};
 use goku_core::execution::run;
-use goku_core::settings::Settings;
+use goku_core::settings::{Settings, OutputFormat};
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
@@ -21,7 +21,6 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-    let output_format = args.output_format();
     let settings: Settings = args.to_settings()?;
 
     settings.validate()?;
@@ -85,7 +84,7 @@ async fn main() -> Result<()> {
     }
     pb.finish_and_clear();
 
-    match output_format {
+    match settings.output {
         OutputFormat::Json => print_json(&report),
         OutputFormat::Csv => print_csv(&report),
         OutputFormat::Text => show_results(report),
