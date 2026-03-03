@@ -1,10 +1,13 @@
 mod args;
+mod output;
 
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressStyle};
 use std::fmt::{Display, Formatter};
+use std::time::Duration;
 use tokio::sync::{mpsc, watch};
 
 use crate::args::Args;
+use crate::output::{OutputFormat, print_csv, print_json};
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
@@ -14,11 +17,48 @@ use goku_core::settings::Settings;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let settings: Settings = Args::parse().to_settings()?;
+    let args = Args::parse();
+    let output_format = args.output_format();
+    let settings: Settings = args.to_settings()?;
+
+    settings.validate()?;
+
     let mut report = Report::new(settings.clients);
     print_banner(&settings);
 
-    let pb = ProgressBar::new(settings.requests as u64);
+    let pb = match settings.duration {
+        None => {
+            let bar = ProgressBar::new(settings.requests as u64);
+            bar.set_style(
+                ProgressStyle::with_template(
+                    "{spinner:.green} [{bar:40.cyan/blue}] {pos}/{len} ({eta})"
+                )
+                .unwrap()
+                .progress_chars("=>-"),
+            );
+            bar
+        }
+        Some(secs) => {
+            let bar = ProgressBar::new(secs);
+            bar.set_style(
+                ProgressStyle::with_template(
+                    "{spinner:.green} Running for {elapsed_precise} / {msg}"
+                )
+                .unwrap(),
+            );
+            bar.set_message(format!("{secs}s"));
+            let pb_clone = bar.clone();
+            tokio::spawn(async move {
+                let mut elapsed = 0u64;
+                while elapsed < secs {
+                    tokio::time::sleep(Duration::from_secs(1)).await;
+                    elapsed += 1;
+                    pb_clone.set_position(elapsed);
+                }
+            });
+            bar
+        }
+    };
 
     let (tx_sigint, rx_sigint) = watch::channel(None);
     let channel_capacity = (settings.clients as usize * 2).min(4096);
@@ -32,11 +72,22 @@ async fn main() -> Result<()> {
     while let Some(value) = benchmark_rx.recv().await {
         match settings.verbose {
             true => println!("{}", DisplayableBenchmarkResult(&value)),
-            false => pb.inc(1),
+            false => {
+                if settings.duration.is_none() {
+                    pb.inc(1);
+                }
+            }
         }
         report.add_result(value);
     }
-    show_results(report);
+    pb.finish_and_clear();
+
+    match output_format {
+        OutputFormat::Json => print_json(&report),
+        OutputFormat::Csv => print_csv(&report),
+        OutputFormat::Text => show_results(report),
+    }
+
     Ok(())
 }
 
@@ -122,12 +173,12 @@ pub fn show_results(r: Report) {
     println!();
     let bd = r.status_breakdown();
     println!("{}", "Status codes".yellow().bold());
-    println!("  {} {}", "2xx".green().bold(),  bd.success.to_string().purple());
+    println!("  {} {}", "2xx".green().bold(), bd.success.to_string().purple());
     if bd.client_error > 0 {
         println!("  {} {}", "4xx".yellow().bold(), bd.client_error.to_string().purple());
     }
     if bd.server_error > 0 {
-        println!("  {} {}", "5xx".red().bold(),    bd.server_error.to_string().purple());
+        println!("  {} {}", "5xx".red().bold(), bd.server_error.to_string().purple());
     }
     if bd.other > 0 {
         println!("  {} {}", "other".cyan().bold(), bd.other.to_string().purple());

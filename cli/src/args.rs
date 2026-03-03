@@ -3,6 +3,7 @@ use std::time::Duration;
 use anyhow::Context;
 use clap::Parser;
 use goku_core::settings::{Header, Settings};
+use crate::output::OutputFormat;
 
 // a HTTP benchmarking tool
 #[derive(Parser, Debug, Default)]
@@ -54,9 +55,16 @@ pub struct Args {
 
     #[arg(long, conflicts_with = "scenario")]
     ramp_up: Option<u64>,
+
+    #[arg(long, default_value = "text")]
+    output: String,
 }
 
 impl Args {
+    pub fn output_format(&self) -> OutputFormat {
+        self.output.parse().unwrap_or_default()
+    }
+
     pub fn to_settings(self) -> anyhow::Result<Settings> {
         match self.scenario {
             None => Self::from_args(self),

@@ -491,6 +491,7 @@ dependencies = [
  "ctrlc",
  "goku-core",
  "indicatif",
+ "serde_json",
  "tokio",
 ]
 

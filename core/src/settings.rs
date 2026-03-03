@@ -77,5 +77,26 @@ impl Settings {
             .expect("target is not well formatted")
             .to_string()
     }
-}
 
+    pub fn validate(&self) -> anyhow::Result<()> {
+        if self.clients <= 0 {
+            anyhow::bail!("--clients must be greater than 0, got {}", self.clients);
+        }
+        if self.duration.is_none() && self.requests <= 0 {
+            anyhow::bail!("--iterations must be greater than 0, got {}", self.requests);
+        }
+        if self.target.trim().is_empty() {
+            anyhow::bail!("--target cannot be empty");
+        }
+        if let Some(ramp_up) = self.ramp_up {
+            if let Some(dur) = self.duration {
+                if ramp_up >= dur {
+                    anyhow::bail!(
+                        "--ramp-up ({ramp_up}s) must be shorter than --duration ({dur}s)"
+                    );
+                }
+            }
+        }
+        Ok(())
+    }
+}
