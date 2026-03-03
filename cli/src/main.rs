@@ -15,6 +15,9 @@ use goku_core::benchmark::{BenchmarkResult, Metrics, Report};
 use goku_core::execution::run;
 use goku_core::settings::Settings;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();

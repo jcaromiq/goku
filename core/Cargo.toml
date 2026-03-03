@@ -24,10 +24,3 @@ serde = { version = "1.0.228", features = ["derive"] }
 
 [dev-dependencies]
 
-
-[profile.release]
-strip = true
-opt-level = 'z'
-lto = true
-codegen-unit = 1
-panic = 'abort'

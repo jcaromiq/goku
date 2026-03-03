@@ -19,11 +19,3 @@ serde = { version = "1.0.228", features = ["derive"] }
 anyhow = "1.0.100"
 schemars = { version = "1.1.0"}
 
-
-
-[profile.release]
-strip = true
-opt-level = 'z'
-lto = true
-codegen-unit = 1
-panic = 'abort'
