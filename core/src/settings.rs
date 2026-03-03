@@ -3,7 +3,7 @@ use std::str::FromStr;
 use std::time::Duration;
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-use strum::{EnumString, Display};
+use strum::{EnumString};
 use crate::settings::Operation::Get;
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Default, Debug)]

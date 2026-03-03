@@ -2,7 +2,7 @@ use std::fs;
 use std::time::Duration;
 use anyhow::Context;
 use clap::Parser;
-use goku_core::settings::{Header, Settings, OutputFormat};
+use goku_core::settings::{Header, Settings};
 
 // a HTTP benchmarking tool
 #[derive(Parser, Debug, Default)]
