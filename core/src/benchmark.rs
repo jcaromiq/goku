@@ -1,5 +1,4 @@
 use hdrhistogram::Histogram;
-use std::collections::HashMap;
 use tokio::time::Instant;
 
 pub trait Metrics {
@@ -30,6 +29,15 @@ pub struct BenchmarkResult {
     pub num_client: usize,
 }
 
+#[derive(Debug, Default)]
+pub struct StatusBreakdown {
+    pub success: usize,    // 2xx
+    pub client_error: usize, // 4xx
+    pub server_error: usize, // 5xx
+    pub network_error: usize, // timeouts, connection refused, etc.
+    pub other: usize,      // 1xx, 3xx, o cualquier otro
+}
+
 #[derive(Debug)]
 pub struct Report {
     pub clients: i32,
@@ -47,18 +55,33 @@ impl Report {
             start: Instant::now(),
         }
     }
+
     pub fn add_result(&mut self, result: BenchmarkResult) {
         let duration = result.duration;
         self.results.push(result);
         self.hist.record(duration).expect("");
     }
-    
-    pub fn oks(&self) -> HashMap<&String, usize> {
-        let mut frequencies = HashMap::new();
-        for r in &self.results {
-            *frequencies.entry(&r.status).or_insert(0) += 1;
+
+    pub fn requests_per_second(&self) -> f64 {
+        let elapsed = self.start.elapsed().as_secs_f64();
+        if elapsed > 0.0 {
+            self.hist.len() as f64 / elapsed
+        } else {
+            0.0
         }
-        frequencies
-        
+    }
+
+    pub fn status_breakdown(&self) -> StatusBreakdown {
+        let mut breakdown = StatusBreakdown::default();
+        for r in &self.results {
+            match r.status.chars().next().and_then(|c| c.to_digit(10)) {
+                Some(2) => breakdown.success += 1,
+                Some(4) => breakdown.client_error += 1,
+                Some(5) => breakdown.server_error += 1,
+                Some(1) | Some(3) => breakdown.other += 1,
+                _ => breakdown.network_error += 1, 
+            }
+        }
+        breakdown
     }
 }

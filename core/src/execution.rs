@@ -44,7 +44,18 @@ pub async fn run(
             .with_context(|| format!("Invalid URL: {}", settings.target()))?,
     );
 
+    let ramp_up_delay = settings.ramp_up.map(|secs| {
+        let total_ms = secs * 1000;
+        let clients = settings.clients.max(1) as u64;
+        std::time::Duration::from_millis(total_ms / clients)
+    });
+
     for id in 0..settings.clients {
+        if id > 0 {
+            if let Some(delay) = ramp_up_delay {
+                tokio::time::sleep(delay).await;
+            }
+        }
         tokio::spawn(exec_iterator(
             id as usize,
             Arc::clone(&settings),

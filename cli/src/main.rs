@@ -67,48 +67,73 @@ pub fn show_results(r: Report) {
     );
     println!(
         "{} {} {}",
-        "Time taken".yellow().bold(),
+        "Time taken      ".yellow().bold(),
         elapsed.as_secs().to_string().purple(),
         "seconds".purple()
     );
     println!(
         "{} {}",
-        "Total requests ".yellow().bold(),
+        "Total requests  ".yellow().bold(),
         r.hist.len().to_string().purple()
     );
     println!(
         "{} {} {}",
-        "Mean request time".yellow().bold(),
-        r.hist.mean().to_string().purple(),
+        "Requests/sec    ".yellow().bold(),
+        format!("{:.2}", r.requests_per_second()).purple(),
+        "req/s".purple()
+    );
+    println!(
+        "{} {} {}",
+        "Mean            ".yellow().bold(),
+        format!("{:.2}", r.hist.mean()).purple(),
         "ms".purple()
     );
     println!(
         "{} {} {}",
-        "Max request time".yellow().bold(),
-        r.results.max().to_string().purple(),
-        "ms".purple()
-    );
-    println!(
-        "{} {} {}",
-        "Min request time".yellow().bold(),
+        "Min             ".yellow().bold(),
         r.results.min().to_string().purple(),
         "ms".purple()
     );
     println!(
         "{} {} {}",
-        "95'th percentile:".yellow().bold(),
+        "Max             ".yellow().bold(),
+        r.results.max().to_string().purple(),
+        "ms".purple()
+    );
+    println!(
+        "{} {} {}",
+        "p50 (median)    ".yellow().bold(),
+        r.hist.value_at_quantile(0.50).to_string().purple(),
+        "ms".purple()
+    );
+    println!(
+        "{} {} {}",
+        "p95             ".yellow().bold(),
         r.hist.value_at_quantile(0.95).to_string().purple(),
         "ms".purple()
     );
     println!(
         "{} {} {}",
-        "99.9'th percentile:".yellow().bold(),
+        "p99.9           ".yellow().bold(),
         r.hist.value_at_quantile(0.999).to_string().purple(),
         "ms".purple()
     );
 
-    for (word, count) in &r.oks() {
-        println!("{} {}", word.yellow().bold(), count.to_string().purple(),);
+    println!();
+    let bd = r.status_breakdown();
+    println!("{}", "Status codes".yellow().bold());
+    println!("  {} {}", "2xx".green().bold(),  bd.success.to_string().purple());
+    if bd.client_error > 0 {
+        println!("  {} {}", "4xx".yellow().bold(), bd.client_error.to_string().purple());
+    }
+    if bd.server_error > 0 {
+        println!("  {} {}", "5xx".red().bold(),    bd.server_error.to_string().purple());
+    }
+    if bd.other > 0 {
+        println!("  {} {}", "other".cyan().bold(), bd.other.to_string().purple());
+    }
+    if bd.network_error > 0 {
+        println!("  {} {}", "network errors".red().bold(), bd.network_error.to_string().purple());
     }
 }
 

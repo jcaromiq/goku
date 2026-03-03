@@ -51,6 +51,9 @@ pub struct Args {
 
     #[arg(long, default_value_t = false)]
     http2: bool,
+
+    #[arg(long, conflicts_with = "scenario")]
+    ramp_up: Option<u64>,
 }
 
 impl Args {
@@ -90,6 +93,7 @@ impl Args {
                 verbose: args.verbose,
                 timeout: Duration::from_millis(args.timeout),
                 http2: args.http2,
+                ramp_up: args.ramp_up,
             }),
             Some(file) => {
                 let content = fs::read_to_string(&file)
@@ -105,6 +109,7 @@ impl Args {
                     verbose: args.verbose,
                     timeout: Duration::from_millis(args.timeout),
                     http2: args.http2,
+                    ramp_up: args.ramp_up,
                 })
             }
         }

@@ -19,6 +19,8 @@ pub struct Settings {
     pub timeout: Duration,
     #[serde(default)]
     pub http2: bool,
+    #[serde(default)]
+    pub ramp_up: Option<u64>,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
