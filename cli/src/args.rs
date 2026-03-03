@@ -48,6 +48,9 @@ pub struct Args {
     /// Timeout in milliseconds
     #[arg(long, default_value_t = 30000)]
     timeout: u64,
+
+    #[arg(long, default_value_t = false)]
+    http2: bool,
 }
 
 impl Args {
@@ -65,9 +68,9 @@ impl Args {
                 let headers: Vec<Header> = headers_string
                     .iter()
                     .map(|v| {
-                        let split: Vec<&str> = v.split(':').collect();
-                        let key = split[0].to_string();
-                        let value = split[1].to_string();
+                        let mut split = v.splitn(2, ':');
+                        let key = split.next().unwrap_or("").trim().to_string();
+                        let value = split.next().unwrap_or("").trim().to_string();
                         Header { key, value }
                     })
                     .collect();
@@ -85,7 +88,8 @@ impl Args {
                 headers,
                 duration: args.duration,
                 verbose: args.verbose,
-                timeout: Duration::from_millis(args.timeout)
+                timeout: Duration::from_millis(args.timeout),
+                http2: args.http2,
             }),
             Some(file) => {
                 let content = fs::read_to_string(&file)
@@ -99,7 +103,8 @@ impl Args {
                     headers,
                     duration: args.duration,
                     verbose: args.verbose,
-                    timeout: Duration::from_millis(args.timeout)
+                    timeout: Duration::from_millis(args.timeout),
+                    http2: args.http2,
                 })
             }
         }

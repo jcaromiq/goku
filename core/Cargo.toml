@@ -13,6 +13,7 @@ reqwest = { version = "0.12.12", default-features = false, features = [
     "rustls-tls",
     "json",
     "stream",
+    "http2",
 ] }
 tokio = { version = "1.48.0", features = ["full"] }
 hdrhistogram = "7.5.4"

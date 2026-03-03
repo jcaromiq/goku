@@ -16,7 +16,9 @@ pub struct Settings {
     pub headers: Option<Vec<Header>>,
     pub duration: Option<u64>,
     pub verbose: bool,
-    pub timeout:Duration
+    pub timeout: Duration,
+    #[serde(default)]
+    pub http2: bool,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]

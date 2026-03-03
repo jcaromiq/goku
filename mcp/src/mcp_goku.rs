@@ -115,7 +115,8 @@ impl GokuMcpServer {
             headers: None,
             duration: None,
             verbose: false,
-            timeout: Duration::from_secs(30000),
+            timeout: Duration::from_millis(30000),
+            http2: false,
         };
 
         let mut report: Report = Report::new(settings.clients);
