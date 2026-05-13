@@ -146,15 +146,19 @@ pub struct Settings {
     /// Number of concurrent workers.
     pub clients: u32,
     /// Total number of requests (ignored when `duration` is set).
+    #[serde(default)]
     pub requests: u32,
     /// Primary target in `[METHOD] <url>` format. Required when `steps` is empty.
+    #[serde(default)]
     pub target: String,
     pub keep_alive: Option<Duration>,
     pub body: Option<String>,
     pub headers: Option<Vec<Header>>,
     /// Test duration in seconds (alternative to `requests`).
     pub duration: Option<u64>,
+    #[serde(default)]
     pub verbose: bool,
+    #[serde(default = "default_timeout")]
     pub timeout: Duration,
     #[serde(default)]
     pub http2: bool,
@@ -185,6 +189,10 @@ pub struct Settings {
     /// Disable HTTP keep-alive / connection reuse.
     #[serde(default)]
     pub disable_keepalive: bool,
+}
+
+fn default_timeout() -> Duration {
+    Duration::from_millis(30_000)
 }
 
 impl Settings {

@@ -24,12 +24,7 @@ pub struct Cli {
 
     /// URL to request. Format: [METHOD] <url>  (default method: GET)
     /// Example: "POST http://localhost:3000/api"
-    #[arg(
-        short,
-        long,
-        conflicts_with = "scenario",
-        required_unless_present_any = ["scenario", "command"]
-    )]
+    #[arg(short, long, conflicts_with = "scenario")]
     pub target: Option<String>,
 
     /// Path to a file whose contents will be used as the request body
@@ -160,10 +155,9 @@ impl Cli {
         Ok(Settings {
             clients: args.clients,
             requests: args.iterations,
-            target: args
-                .target
-                .clone()
-                .expect("target is required (enforced by clap)"),
+            target: args.target.clone().ok_or_else(|| {
+                anyhow::anyhow!("error: the following required arguments were not provided:\n  --target <TARGET>\n\nUsage: goku --target <TARGET>\n\nFor more information, try '--help'.")
+            })?,
             keep_alive: None,
             body,
             headers,
