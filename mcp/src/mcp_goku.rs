@@ -238,21 +238,20 @@ fn build_json_report(r: &Report) -> String {
 #[tool_handler]
 impl ServerHandler for GokuMcpServer {
     fn get_info(&self) -> ServerInfo {
-        ServerInfo {
-            protocol_version: ProtocolVersion::V_2025_06_18,
-            capabilities: ServerCapabilities::builder()
+        ServerInfo::new(
+            ServerCapabilities::builder()
                 .enable_prompts()
                 .enable_resources()
                 .enable_tools()
                 .build(),
-            server_info: Implementation::from_build_env(),
-            instructions: Some(
-                "Goku MCP server — exposes a single `run_benchmark` tool that runs an HTTP \
-                load test and returns a full JSON report with latency percentiles, throughput, \
-                and status code breakdown. Supports concurrency, duration or request count, \
-                custom headers, request body, HTTP/2, ramp-up, timeout, and rate limiting."
-                    .to_string(),
-            ),
-        }
+        )
+        .with_server_info(Implementation::from_build_env())
+        .with_instructions(
+            "Goku MCP server — exposes a single `run_benchmark` tool that runs an HTTP \
+            load test and returns a full JSON report with latency percentiles, throughput, \
+            and status code breakdown. Supports concurrency, duration or request count, \
+            custom headers, request body, HTTP/2, ramp-up, timeout, and rate limiting."
+                .to_string(),
+        )
     }
 }

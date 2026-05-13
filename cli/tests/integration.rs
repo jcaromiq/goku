@@ -151,7 +151,7 @@ fn test_multi_step_scenario() {
             .path("/step2")
             .header("Content-Type", "application/json")
             // Can't easily match templated UUID body exactly, so we match any body
-            .body_contains("uuid_");
+            .body_includes("uuid_");
         then.status(201);
     });
 
