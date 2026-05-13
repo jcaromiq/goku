@@ -483,7 +483,7 @@ dependencies = [
 
 [[package]]
 name = "goku-bench"
-version = "2.0.1"
+version = "3.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -492,13 +492,14 @@ dependencies = [
  "goku-core",
  "indicatif",
  "mimalloc",
+ "serde",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
 name = "goku-core"
-version = "2.0.1"
+version = "3.0.0"
 dependencies = [
  "anyhow",
  "hdrhistogram",
@@ -511,13 +512,14 @@ dependencies = [
 
 [[package]]
 name = "goku-mcp"
-version = "2.0.1"
+version = "3.0.0"
 dependencies = [
  "anyhow",
  "goku-core",
  "rmcp",
  "schemars",
  "serde",
+ "serde_json",
  "tokio",
 ]
 

@@ -1,39 +1,253 @@
 mod args;
 mod output;
 
-use indicatif::{ProgressBar, ProgressStyle};
 use std::fmt::{Display, Formatter};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio::sync::{mpsc, watch};
 
-use crate::args::Args;
-use crate::output::{print_csv, print_json};
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
-use goku_core::benchmark::{BenchmarkResult, Metrics, Report};
+use indicatif::{ProgressBar, ProgressStyle};
+use tokio::sync::{mpsc, watch};
+
+use crate::args::{Cli, Command};
+use crate::output::{
+    print_comparison, print_csv, print_json, print_text, print_text_colored, write_results_log,
+    RunSnapshot,
+};
+use goku_core::benchmark::{BenchmarkResult, Report};
 use goku_core::execution::run;
-use goku_core::settings::{Settings, OutputFormat};
+use goku_core::settings::{OutputFormat, Settings};
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
+// ---------------------------------------------------------------------------
+// Entry point
+// ---------------------------------------------------------------------------
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    let args = Args::parse();
-    let settings: Settings = args.to_settings()?;
+    let cli = Cli::parse();
 
+    // Handle subcommands first
+    if let Some(cmd) = &cli.command {
+        return handle_subcommand(cmd);
+    }
+
+    let settings: Settings = cli.to_settings()?;
     settings.validate()?;
 
-    let mut report = Report::new(settings.clients);
+    run_benchmark(settings).await
+}
+
+// ---------------------------------------------------------------------------
+// Subcommand dispatch
+// ---------------------------------------------------------------------------
+
+fn handle_subcommand(cmd: &Command) -> Result<()> {
+    match cmd {
+        Command::Compare {
+            baseline,
+            candidate,
+        } => {
+            let base_raw = std::fs::read_to_string(baseline)
+                .map_err(|e| anyhow::anyhow!("Cannot read baseline file '{}': {}", baseline, e))?;
+            let cand_raw = std::fs::read_to_string(candidate).map_err(|e| {
+                anyhow::anyhow!("Cannot read candidate file '{}': {}", candidate, e)
+            })?;
+
+            let base: RunSnapshot = serde_json::from_str(&base_raw).map_err(|e| {
+                anyhow::anyhow!("Invalid JSON in baseline file '{}': {}", baseline, e)
+            })?;
+            let cand: RunSnapshot = serde_json::from_str(&cand_raw).map_err(|e| {
+                anyhow::anyhow!("Invalid JSON in candidate file '{}': {}", candidate, e)
+            })?;
+
+            print_comparison(&base, &cand);
+        }
+    }
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Benchmark runner
+// ---------------------------------------------------------------------------
+
+async fn run_benchmark(settings: Settings) -> Result<()> {
     print_banner(&settings);
 
-    let pb = match settings.duration {
+    // ── Progress bar ──────────────────────────────────────────────────────
+    let pb = build_progress_bar(&settings);
+
+    // ── Channels ──────────────────────────────────────────────────────────
+    let (tx_sigint, rx_sigint) = watch::channel(None);
+    let channel_capacity = (settings.clients as usize * 2).min(4096);
+    let (benchmark_tx, mut benchmark_rx) = mpsc::channel::<BenchmarkResult>(channel_capacity);
+
+    ctrlc::set_handler(move || {
+        tx_sigint.send(Some(())).unwrap_or(());
+    })?;
+
+    // ── Live stats ─────────────────────────────────────────────────────────
+    let live_report: Option<Arc<Mutex<Report>>> = settings.live_stats.map(|interval_secs| {
+        let shared = Arc::new(Mutex::new(Report::new(settings.clients)));
+        let arc_clone = Arc::clone(&shared);
+        let secs = interval_secs;
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(Duration::from_secs(secs)).await;
+                if let Ok(r) = arc_clone.lock() {
+                    let total = r.hist.len();
+                    if total > 0 {
+                        eprintln!(
+                            "  [live] requests={} rps={:.1} p50={}ms p95={}ms",
+                            total,
+                            r.requests_per_second(),
+                            r.hist.value_at_quantile(0.50),
+                            r.hist.value_at_quantile(0.95),
+                        );
+                    }
+                }
+            }
+        });
+        shared
+    });
+
+    // ── Spawn workers ──────────────────────────────────────────────────────
+    run(settings.clone(), benchmark_tx, Some(rx_sigint)).await?;
+
+    // ── Collect results ────────────────────────────────────────────────────
+    let mut report = Report::new(settings.clients);
+    while let Some(value) = benchmark_rx.recv().await {
+        match settings.verbose {
+            true => println!("{}", DisplayableBenchmarkResult(&value)),
+            false => {
+                if settings.duration.is_none() {
+                    pb.inc(1);
+                }
+            }
+        }
+        // Update live-stats report if active
+        if let Some(live) = &live_report {
+            if let Ok(mut r) = live.lock() {
+                r.add_result(value.clone());
+            }
+        }
+        report.add_result(value);
+    }
+    pb.finish_and_clear();
+
+    // ── Output results ─────────────────────────────────────────────────────
+    write_output(&settings, &report)?;
+
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Output writer
+// ---------------------------------------------------------------------------
+
+fn write_output(settings: &Settings, report: &Report) -> Result<()> {
+    // Determine the output writer (file or stdout)
+    let mut file_handle: Option<std::fs::File> = None;
+    if let Some(path) = &settings.output_file {
+        let f = std::fs::File::create(path)
+            .map_err(|e| anyhow::anyhow!("Cannot create output file '{}': {}", path, e))?;
+        file_handle = Some(f);
+    }
+
+    // Write main results
+    match &settings.output {
+        OutputFormat::Text => {
+            if let Some(f) = &mut file_handle {
+                print_text(report, f);
+            } else {
+                print_text_colored(report);
+            }
+        }
+        OutputFormat::Json => {
+            if let Some(f) = &mut file_handle {
+                print_json(report, f);
+            } else {
+                let mut stdout = std::io::stdout();
+                print_json(report, &mut stdout);
+            }
+        }
+        OutputFormat::Csv => {
+            if let Some(f) = &mut file_handle {
+                print_csv(report, f);
+            } else {
+                let mut stdout = std::io::stdout();
+                print_csv(report, &mut stdout);
+            }
+        }
+    }
+
+    // Write per-request log if requested
+    if let Some(log_path) = &settings.results_log {
+        let mut log_file = std::fs::File::create(log_path)
+            .map_err(|e| anyhow::anyhow!("Cannot create results log '{}': {}", log_path, e))?;
+        write_results_log(report, &mut log_file);
+    }
+
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Banner
+// ---------------------------------------------------------------------------
+
+pub fn print_banner(settings: &Settings) {
+    let target_display = if settings.steps.is_empty() {
+        settings.target.clone()
+    } else {
+        format!("{} steps", settings.steps.len())
+    };
+
+    let banner = match settings.duration {
+        None => format!(
+            "kamehameha to {} with {} concurrent clients and {} total iterations",
+            target_display, settings.clients, settings.requests
+        ),
+        Some(d) => format!(
+            "kamehameha to {} with {} concurrent clients for {} seconds",
+            target_display, settings.clients, d
+        ),
+    };
+
+    let mut extras = vec![];
+    if settings.http2 {
+        extras.push("HTTP/2".to_string());
+    }
+    if settings.insecure {
+        extras.push("insecure".yellow().to_string());
+    }
+    if let Some(rps) = settings.rps {
+        extras.push(format!("{}rps limit", rps));
+    }
+    if settings.auth.is_some() {
+        extras.push("auth".to_string());
+    }
+
+    println!("{}", banner.cyan().bold());
+    if !extras.is_empty() {
+        println!("  [{}]", extras.join(", "));
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Progress bar builder
+// ---------------------------------------------------------------------------
+
+fn build_progress_bar(settings: &Settings) -> ProgressBar {
+    match settings.duration {
         None => {
             let bar = ProgressBar::new(settings.requests as u64);
             bar.set_style(
                 ProgressStyle::with_template(
-                    "{spinner:.green} [{bar:40.cyan/blue}] {pos}/{len} ({eta})"
+                    "{spinner:.green} [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
                 )
                 .unwrap()
                 .progress_chars("=>-"),
@@ -44,7 +258,7 @@ async fn main() -> Result<()> {
             let bar = ProgressBar::new(secs);
             bar.set_style(
                 ProgressStyle::with_template(
-                    "{spinner:.green} Running for {elapsed_precise} / {msg}"
+                    "{spinner:.green} Running for {elapsed_precise} / {msg}",
                 )
                 .unwrap(),
             );
@@ -60,150 +274,27 @@ async fn main() -> Result<()> {
             });
             bar
         }
-    };
-
-    let (tx_sigint, rx_sigint) = watch::channel(None);
-    let channel_capacity = (settings.clients as usize * 2).min(4096);
-    let (benchmark_tx, mut benchmark_rx) = mpsc::channel(channel_capacity);
-
-    ctrlc::set_handler(move || {
-        tx_sigint.send(Some(())).unwrap_or(());
-    })?;
-
-    run(settings.clone(), benchmark_tx, Some(rx_sigint)).await?;
-    while let Some(value) = benchmark_rx.recv().await {
-        match settings.verbose {
-            true => println!("{}", DisplayableBenchmarkResult(&value)),
-            false => {
-                if settings.duration.is_none() {
-                    pb.inc(1);
-                }
-            }
-        }
-        report.add_result(value);
-    }
-    pb.finish_and_clear();
-
-    match settings.output {
-        OutputFormat::Json => print_json(&report),
-        OutputFormat::Csv => print_csv(&report),
-        OutputFormat::Text => show_results(report),
-    }
-
-    Ok(())
-}
-
-pub fn print_banner(settings: &Settings) {
-    let banner = match settings.duration {
-        None => format!(
-            "kamehameha to {} with {} concurrent clients and {} total iterations",
-            settings.target, settings.clients, settings.requests
-        ),
-        Some(d) => format!(
-            "kamehameha to {} with {} concurrent clients for {} seconds",
-            settings.target, settings.clients, d
-        ),
-    };
-    println!("{banner}");
-}
-
-pub fn show_results(r: Report) {
-    let elapsed = r.start.elapsed();
-
-    println!();
-    println!();
-    println!();
-    println!(
-        "{} {}",
-        "Concurrency level".yellow().bold(),
-        r.clients.to_string().purple()
-    );
-    println!(
-        "{} {} {}",
-        "Time taken      ".yellow().bold(),
-        elapsed.as_secs().to_string().purple(),
-        "seconds".purple()
-    );
-    println!(
-        "{} {}",
-        "Total requests  ".yellow().bold(),
-        r.hist.len().to_string().purple()
-    );
-    println!(
-        "{} {} {}",
-        "Requests/sec    ".yellow().bold(),
-        format!("{:.2}", r.requests_per_second()).purple(),
-        "req/s".purple()
-    );
-    println!(
-        "{} {} {}",
-        "Mean            ".yellow().bold(),
-        format!("{:.2}", r.hist.mean()).purple(),
-        "ms".purple()
-    );
-    println!(
-        "{} {} {}",
-        "Min             ".yellow().bold(),
-        r.results.min().to_string().purple(),
-        "ms".purple()
-    );
-    println!(
-        "{} {} {}",
-        "Max             ".yellow().bold(),
-        r.results.max().to_string().purple(),
-        "ms".purple()
-    );
-    println!(
-        "{} {} {}",
-        "p50 (median)    ".yellow().bold(),
-        r.hist.value_at_quantile(0.50).to_string().purple(),
-        "ms".purple()
-    );
-    println!(
-        "{} {} {}",
-        "p95             ".yellow().bold(),
-        r.hist.value_at_quantile(0.95).to_string().purple(),
-        "ms".purple()
-    );
-    println!(
-        "{} {} {}",
-        "p99.9           ".yellow().bold(),
-        r.hist.value_at_quantile(0.999).to_string().purple(),
-        "ms".purple()
-    );
-
-    println!();
-    let bd = r.status_breakdown();
-    println!("{}", "Status codes".yellow().bold());
-    println!("  {} {}", "2xx".green().bold(), bd.success.to_string().purple());
-    if bd.client_error > 0 {
-        println!("  {} {}", "4xx".yellow().bold(), bd.client_error.to_string().purple());
-    }
-    if bd.server_error > 0 {
-        println!("  {} {}", "5xx".red().bold(), bd.server_error.to_string().purple());
-    }
-    if bd.other > 0 {
-        println!("  {} {}", "other".cyan().bold(), bd.other.to_string().purple());
-    }
-    if bd.network_error > 0 {
-        println!("  {} {}", "network errors".red().bold(), bd.network_error.to_string().purple());
     }
 }
+
+// ---------------------------------------------------------------------------
+// Verbose display
+// ---------------------------------------------------------------------------
 
 struct DisplayableBenchmarkResult<'a>(&'a BenchmarkResult);
 
 impl Display for DisplayableBenchmarkResult<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let report = format!(
+        write!(
+            f,
             "[{} {} {} {}] {} {}{}",
             "Client".bold().green(),
             self.0.num_client.to_string().bold().green(),
-            "Iteration".bold().green(),
+            "Iter".bold().green(),
             self.0.execution.to_string().bold().green(),
             self.0.status.to_string().bold().yellow(),
             self.0.duration.to_string().cyan(),
-            "ms".cyan()
-        );
-        write!(f, "{}", report)
+            "ms".cyan(),
+        )
     }
 }
