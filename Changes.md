@@ -1,3 +1,20 @@
+## 3.0.0 - 2026-05-13
+### 🚀 Features
+- Rate limiting support.
+- Multi-step scenarios.
+- Authentication support.
+- Request templating support.
+- Unified MCP integration.
+- Added new integration tests suite.
+
+### 🛠 Improvements
+- Overall performance improvements.
+- Build system improvements.
+- Fixed scenario settings.
+
+### 📦 Dependency Updates
+- Updated dependencies to their latest stable versions (including reqwest 0.13.x, rmcp 1.7.0 and httpmock 0.8.x).
+
 ## 2.0.1 - 2025-11-25
 ### 🚀 Features
 - Added `install_mcp.sh` installation script for downloading and installing Goku mcp server tool
