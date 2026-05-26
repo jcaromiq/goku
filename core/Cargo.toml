@@ -9,7 +9,7 @@ keywords = ["performance", "http", "benchmark", "load-testing", "performance-tes
 license = "MIT"
 
 [dependencies]
-reqwest = { version = "0.13.3", default-features = false, features = [
+reqwest = { version = "0.13.4", default-features = false, features = [
     "rustls",
     "json",
     "stream",
