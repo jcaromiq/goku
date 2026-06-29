@@ -13,7 +13,7 @@ path = "src/main.rs"
 
 [dependencies]
 goku-core = { version = "3.0.0", path = "../core" }
-rmcp = { version = "1.7.0", features = ["transport-io", "server"] }
+rmcp = { version = "2.0.0", features = ["transport-io", "server"] }
 tokio = { version = "1.52.3", features = ["macros", "rt", "rt-multi-thread", "io-std", "signal"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0"
