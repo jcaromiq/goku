@@ -1,5 +1,6 @@
 mod args;
 mod output;
+mod portal;
 
 use std::fmt::{Display, Formatter};
 use std::sync::{Arc, Mutex};
@@ -13,9 +14,10 @@ use tokio::sync::{mpsc, watch};
 
 use crate::args::{Cli, Command};
 use crate::output::{
-    print_comparison, print_csv, print_json, print_text, print_text_colored, write_results_log,
-    RunSnapshot,
+    print_comparison, print_csv, print_json, print_text, print_text_colored, summarize,
+    write_results_log, RunSnapshot,
 };
+use crate::portal::{ReportContext, ReportOptions};
 use goku_core::benchmark::{BenchmarkResult, Report};
 use goku_core::execution::run;
 use goku_core::settings::{OutputFormat, Settings};
@@ -33,20 +35,21 @@ async fn main() -> Result<()> {
 
     // Handle subcommands first
     if let Some(cmd) = &cli.command {
-        return handle_subcommand(cmd);
+        return handle_subcommand(cmd).await;
     }
 
+    let report = cli.report_options();
     let settings: Settings = cli.to_settings()?;
     settings.validate()?;
 
-    run_benchmark(settings).await
+    run_benchmark(settings, report).await
 }
 
 // ---------------------------------------------------------------------------
 // Subcommand dispatch
 // ---------------------------------------------------------------------------
 
-fn handle_subcommand(cmd: &Command) -> Result<()> {
+async fn handle_subcommand(cmd: &Command) -> Result<()> {
     match cmd {
         Command::Compare {
             baseline,
@@ -67,6 +70,12 @@ fn handle_subcommand(cmd: &Command) -> Result<()> {
 
             print_comparison(&base, &cand);
         }
+        Command::Login {
+            portal_url,
+            no_browser,
+        } => portal::login(portal_url.clone(), *no_browser).await?,
+        Command::Logout => portal::logout()?,
+        Command::Status => portal::status().await?,
     }
     Ok(())
 }
@@ -75,8 +84,9 @@ fn handle_subcommand(cmd: &Command) -> Result<()> {
 // Benchmark runner
 // ---------------------------------------------------------------------------
 
-async fn run_benchmark(settings: Settings) -> Result<()> {
+async fn run_benchmark(settings: Settings, report_options: Option<ReportOptions>) -> Result<()> {
     print_banner(&settings);
+    let started_at = chrono::Utc::now();
 
     // ── Progress bar ──────────────────────────────────────────────────────
     let pb = build_progress_bar(&settings);
@@ -138,9 +148,21 @@ async fn run_benchmark(settings: Settings) -> Result<()> {
         report.add_result(value);
     }
     pb.finish_and_clear();
+    let finished_at = chrono::Utc::now();
+    let summary = report_options.as_ref().map(|_| summarize(&report));
 
     // ── Output results ─────────────────────────────────────────────────────
     write_output(&settings, &report)?;
+
+    // ── Observability Insight report ───────────────────────────────────────
+    if let (Some(options), Some(summary)) = (report_options, summary) {
+        let ctx = ReportContext {
+            settings: &settings,
+            started_at,
+            finished_at,
+        };
+        portal::send_report(ctx, &options, &summary).await?;
+    }
 
     Ok(())
 }

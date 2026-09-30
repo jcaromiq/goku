@@ -239,3 +239,177 @@ fn test_compare_subcommand() {
         .stdout(predicate::str::contains("Requests/sec"))
         .stdout(predicate::str::contains("+20.0%"));
 }
+
+// ---------------------------------------------------------------------------
+// Observability Insight integration
+// ---------------------------------------------------------------------------
+
+fn portal_cmd(portal: &MockServer, config_dir: &std::path::Path) -> Command {
+    let mut cmd = Command::cargo_bin("goku").unwrap();
+    cmd.env("GOKU_OI_URL", portal.base_url())
+        .env("GOKU_CONFIG_DIR", config_dir)
+        .env_remove("GOKU_OI_TOKEN")
+        .env_remove("GITHUB_SHA")
+        .env_remove("CI_COMMIT_SHA");
+    cmd
+}
+
+#[test]
+fn test_report_sends_results_to_portal() {
+    let target = MockServer::start();
+    let target_mock = target.mock(|when, then| {
+        when.method("GET").path("/api");
+        then.status(200);
+    });
+
+    let portal = MockServer::start();
+    let ingest = portal.mock(|when, then| {
+        when.method("POST")
+            .path("/api/v1/goku/runs")
+            .header("authorization", "Bearer oi_goku_test")
+            .json_body_includes(
+                r#"{"schema_version":1,"name":"smoke","tags":["ci"],
+                    "config":{"clients":1,"iterations":3,"duration_secs":null},
+                    "results":{"total_requests":3,"status_2xx":3}}"#,
+            );
+        then.status(201).json_body(serde_json::json!({
+            "id": "r1", "run_id": "x", "url": "https://portal.test/runs/r1"
+        }));
+    });
+
+    let dir = tempfile::tempdir().unwrap();
+    portal_cmd(&portal, dir.path())
+        .env("GOKU_OI_TOKEN", "oi_goku_test")
+        .args(["-i", "3", "--report", "--report-name", "smoke", "--report-tag", "ci"])
+        .arg("--target")
+        .arg(format!("{}?secret=1", target.url("/api")))
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("Report sent: https://portal.test/runs/r1"));
+
+    target_mock.assert_calls(3);
+    ingest.assert();
+}
+
+#[test]
+fn test_report_fails_with_revoked_token() {
+    let target = MockServer::start();
+    target.mock(|when, then| {
+        when.method("GET").path("/api");
+        then.status(200);
+    });
+    let portal = MockServer::start();
+    portal.mock(|when, then| {
+        when.method("POST").path("/api/v1/goku/runs");
+        then.status(401).json_body(serde_json::json!({"error": "unauthorized"}));
+    });
+
+    let dir = tempfile::tempdir().unwrap();
+    portal_cmd(&portal, dir.path())
+        .env("GOKU_OI_TOKEN", "oi_goku_revoked")
+        .args(["-i", "1", "--report", "--target"])
+        .arg(target.url("/api"))
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("revoked"));
+}
+
+#[test]
+fn test_report_without_credentials_fails() {
+    let target = MockServer::start();
+    target.mock(|when, then| {
+        when.method("GET").path("/api");
+        then.status(200);
+    });
+    let portal = MockServer::start();
+    let dir = tempfile::tempdir().unwrap();
+    portal_cmd(&portal, dir.path())
+        .args(["-i", "1", "--report", "--target"])
+        .arg(target.url("/api"))
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("goku login"));
+}
+
+#[test]
+fn test_status_shows_project() {
+    let portal = MockServer::start();
+    let me = portal.mock(|when, then| {
+        when.method("GET")
+            .path("/api/v1/goku/me")
+            .header("authorization", "Bearer oi_goku_test");
+        then.status(200).json_body(serde_json::json!({
+            "project": {"id": "p1", "name": "Checkout API"},
+            "connection": {"id": "c1", "name": "Goku"},
+            "token": {"name": "CLI (laptop)", "prefix": "oi_goku_ab"}
+        }));
+    });
+
+    let dir = tempfile::tempdir().unwrap();
+    portal_cmd(&portal, dir.path())
+        .env("GOKU_OI_TOKEN", "oi_goku_test")
+        .arg("status")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Checkout API"))
+        .stdout(predicate::str::contains("GOKU_OI_TOKEN"));
+    me.assert();
+}
+
+#[test]
+fn test_status_uses_credentials_file_and_logout_removes_it() {
+    let portal = MockServer::start();
+    let me = portal.mock(|when, then| {
+        when.method("GET")
+            .path("/api/v1/goku/me")
+            .header("authorization", "Bearer oi_goku_file");
+        then.status(200).json_body(serde_json::json!({
+            "project": {"id": "p1", "name": "From file"}
+        }));
+    });
+
+    let dir = tempfile::tempdir().unwrap();
+    let creds = dir.path().join("credentials.json");
+    std::fs::write(
+        &creds,
+        serde_json::json!({
+            "portal_url": "https://unused.example.com",
+            "token": "oi_goku_file",
+            "project_id": "p1",
+            "project_name": "From file",
+            "connection_id": null,
+            "created_at": "2026-09-29T10:00:00.000Z"
+        })
+        .to_string(),
+    )
+    .unwrap();
+
+    portal_cmd(&portal, dir.path())
+        .arg("status")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("From file"));
+    me.assert();
+
+    portal_cmd(&portal, dir.path())
+        .arg("logout")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Logged out"));
+    assert!(!creds.exists());
+
+    portal_cmd(&portal, dir.path())
+        .arg("status")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("goku login"));
+}
+
+#[test]
+fn test_report_name_requires_report() {
+    Command::cargo_bin("goku")
+        .unwrap()
+        .args(["--target", "http://localhost:1", "--report-name", "x"])
+        .assert()
+        .failure();
+}

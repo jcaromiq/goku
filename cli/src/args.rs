@@ -5,6 +5,8 @@ use anyhow::Context;
 use clap::{Parser, Subcommand};
 use goku_core::settings::{Auth, Header, Settings};
 
+use crate::portal::ReportOptions;
+
 // ---------------------------------------------------------------------------
 // Top-level CLI structure (supports subcommands)
 // ---------------------------------------------------------------------------
@@ -102,6 +104,20 @@ pub struct Cli {
     /// Disable HTTP keep-alive / connection reuse
     #[arg(long, default_value_t = false)]
     pub disable_keepalive: bool,
+
+    // ── Observability Insight reporting ──
+
+    /// Send the final results to Observability Insight (requires `goku login` or GOKU_OI_TOKEN)
+    #[arg(long, default_value_t = false)]
+    pub report: bool,
+
+    /// Name of the run shown in Observability Insight
+    #[arg(long, requires = "report")]
+    pub report_name: Option<String>,
+
+    /// Tag for the run in Observability Insight (repeatable)
+    #[arg(long, requires = "report")]
+    pub report_tag: Vec<String>,
 }
 
 // ---------------------------------------------------------------------------
@@ -117,6 +133,19 @@ pub enum Command {
         /// Second result file (candidate)
         candidate: String,
     },
+    /// Log in to Observability Insight and link this machine to a project
+    Login {
+        /// Portal URL (default: https://portal.observabilityinsight.com or GOKU_OI_URL)
+        #[arg(long)]
+        portal_url: Option<String>,
+        /// Print the login URL instead of opening the browser
+        #[arg(long, default_value_t = false)]
+        no_browser: bool,
+    },
+    /// Remove the stored Observability Insight credentials
+    Logout,
+    /// Show the Observability Insight project this machine reports to
+    Status,
 }
 
 // ---------------------------------------------------------------------------
@@ -124,6 +153,14 @@ pub enum Command {
 // ---------------------------------------------------------------------------
 
 impl Cli {
+    /// `Some` when `--report` was passed.
+    pub fn report_options(&self) -> Option<ReportOptions> {
+        self.report.then(|| ReportOptions {
+            name: self.report_name.clone(),
+            tags: self.report_tag.clone(),
+        })
+    }
+
     pub fn to_settings(self) -> anyhow::Result<Settings> {
         let output_format = self.output.parse().unwrap_or_default();
         let auth = parse_auth(self.auth_bearer.as_deref(), self.auth_basic.as_deref())?;

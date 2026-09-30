@@ -223,31 +223,59 @@ pub fn print_text_colored(r: &Report) {
 // JSON output
 // ---------------------------------------------------------------------------
 
-pub fn print_json(r: &Report, out: &mut dyn Write) {
+/// Final results of a benchmark run. Shared by the JSON output and the
+/// Observability Insight report payload.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct RunSummary {
+    pub concurrency: u32,
+    pub duration_secs: f64,
+    pub total_requests: u64,
+    pub requests_per_sec: f64,
+    pub mean_ms: f64,
+    pub min_ms: u64,
+    pub max_ms: u64,
+    pub p50_ms: u64,
+    pub p95_ms: u64,
+    pub p99_ms: u64,
+    pub p999_ms: u64,
+    pub status_2xx: usize,
+    pub status_4xx: usize,
+    pub status_5xx: usize,
+    pub status_other: usize,
+    pub network_errors: usize,
+}
+
+pub fn summarize(r: &Report) -> RunSummary {
     let elapsed = r.start.elapsed().as_secs_f64();
     let bd = r.status_breakdown();
     let min = r.results.iter().map(|x| x.duration).min().unwrap_or(0);
     let max = r.results.iter().map(|x| x.duration).max().unwrap_or(0);
 
-    let data = serde_json::json!({
-        "concurrency": r.clients,
-        "duration_secs": format!("{:.3}", elapsed).parse::<f64>().unwrap_or(0.0),
-        "total_requests": r.hist.len(),
-        "requests_per_sec": format!("{:.2}", r.requests_per_second()).parse::<f64>().unwrap_or(0.0),
-        "mean_ms": format!("{:.2}", r.hist.mean()).parse::<f64>().unwrap_or(0.0),
-        "min_ms": min,
-        "max_ms": max,
-        "p50_ms": r.hist.value_at_quantile(0.50),
-        "p95_ms": r.hist.value_at_quantile(0.95),
-        "p99_ms": r.hist.value_at_quantile(0.99),
-        "p999_ms": r.hist.value_at_quantile(0.999),
-        "status_2xx": bd.success,
-        "status_4xx": bd.client_error,
-        "status_5xx": bd.server_error,
-        "status_other": bd.other,
-        "network_errors": bd.network_error,
-    });
+    RunSummary {
+        concurrency: r.clients,
+        duration_secs: format!("{:.3}", elapsed).parse::<f64>().unwrap_or(0.0),
+        total_requests: r.hist.len(),
+        requests_per_sec: format!("{:.2}", r.requests_per_second())
+            .parse::<f64>()
+            .unwrap_or(0.0),
+        mean_ms: format!("{:.2}", r.hist.mean()).parse::<f64>().unwrap_or(0.0),
+        min_ms: min,
+        max_ms: max,
+        p50_ms: r.hist.value_at_quantile(0.50),
+        p95_ms: r.hist.value_at_quantile(0.95),
+        p99_ms: r.hist.value_at_quantile(0.99),
+        p999_ms: r.hist.value_at_quantile(0.999),
+        status_2xx: bd.success,
+        status_4xx: bd.client_error,
+        status_5xx: bd.server_error,
+        status_other: bd.other,
+        network_errors: bd.network_error,
+    }
+}
 
+pub fn print_json(r: &Report, out: &mut dyn Write) {
+    // Going through `Value` keeps the historical alphabetical key order.
+    let data = serde_json::to_value(summarize(r)).unwrap_or_default();
     let json_str = serde_json::to_string_pretty(&data)
         .unwrap_or_else(|e| format!("{{\"error\": \"{e}\"}}"));
     let _ = writeln!(out, "{}", json_str);

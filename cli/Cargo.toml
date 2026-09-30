@@ -23,6 +23,13 @@ indicatif = "0.18.4"
 serde_json = "1.0"
 serde = { version = "1.0.228", features = ["derive"] }
 mimalloc = { version = "0.1", default-features = false }
+reqwest = { version = "0.13.3", default-features = false, features = ["rustls", "json"] }
+sha2 = "0.10"
+base64 = "0.22"
+rand = "0.9"
+uuid = { version = "1", features = ["v4"] }
+dirs = "6"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 
 [dev-dependencies]
 assert_cmd = "2.2"

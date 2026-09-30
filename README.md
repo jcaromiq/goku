@@ -20,6 +20,7 @@ Goku is a high-performance, scalable HTTP load-testing tool designed for benchma
 * HTTP/1.1, HTTP/2 support
 * Multiple output formats: `text`, `json`, `csv`
 * MCP (Model Context Protocol) server for LLM/agent integration
+* Send results to [Observability Insight](https://portal.observabilityinsight.com) to keep a history of runs and compare them
 
 ---
 
@@ -51,6 +52,56 @@ Go to the Goku's [GitHub Releases page](https://github.com/jcaromiq/goku/release
 ```shell
 cargo build --release
 ```
+
+---
+
+## Observability Insight integration
+
+Goku can send the final results of every run to a project in
+[Observability Insight](https://portal.observabilityinsight.com), where you get the history of your
+performance tests and can compare runs to spot regressions. Enable the **Goku** connector in your project first.
+
+### Log in (local machine)
+
+```shell
+goku login
+```
+
+Goku opens the browser, you log in and choose the project, and a token for that project's Goku connector
+is stored in `~/.config/goku/credentials.json` (permissions `0600`; on macOS/Windows the OS config
+directory is used). Use `--no-browser` to only print the URL, and `--portal-url` to point to another portal.
+
+### Send results
+
+```shell
+goku -c 50 -d 30 --target https://api.example.com/users --report --report-name "users list" --report-tag nightly
+```
+
+Only the final summary (throughput, latency percentiles, status codes and the test configuration) is sent.
+Query strings and credentials in target URLs are stripped before sending. If the report cannot be sent,
+Goku exits with a non-zero status.
+
+### CI
+
+Browsers are not available in CI: create a token in the project's Goku connector settings and expose it as
+`GOKU_OI_TOKEN` (optionally `GOKU_OI_URL` for another portal). Environment variables take precedence over
+the credentials file. Commit and branch are detected on GitHub Actions and GitLab CI.
+
+```yaml
+- run: goku -c 20 -d 60 --target https://staging.example.com --report --report-name "staging smoke"
+  env:
+    GOKU_OI_TOKEN: ${{ secrets.GOKU_OI_TOKEN }}
+```
+
+### Status and logout
+
+```shell
+goku status   # project, connector and token in use
+goku logout   # removes the local credentials file
+```
+
+`goku logout` only deletes the local file: revoke the token from the Goku connector settings in the portal
+to invalidate it.
 
 ---
 
@@ -119,6 +170,7 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 ```console
 Usage: goku [OPTIONS] --target <TARGET>
        goku compare <BASELINE> <CANDIDATE>
+       goku login | logout | status
 
 Options:
   -v, --verbose                        Runs in verbose mode
@@ -143,11 +195,17 @@ Options:
       --auth-basic <USER:PASS>         Set Authorization: Basic <base64> header
       --pool-idle-timeout <seconds>    Connection pool idle timeout [default: 90]
       --disable-keepalive              Disable HTTP keep-alive / connection reuse
+      --report                         Send the final results to Observability Insight
+      --report-name <NAME>             Name of the run in Observability Insight (requires --report)
+      --report-tag <TAG>               Tag for the run in Observability Insight (repeatable, requires --report)
   -h, --help                           Print help
   -V, --version                        Print version
 
 Subcommands:
   compare <BASELINE> <CANDIDATE>       Compare two JSON result files and show a diff table
+  login [--portal-url URL] [--no-browser]  Link this machine to an Observability Insight project
+  logout                               Remove the stored Observability Insight credentials
+  status                               Show the project this machine reports to
 ```
 
 ---
